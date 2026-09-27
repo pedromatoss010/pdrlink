@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>pdrLink - Autenticação</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <div class="login-wrapper glass-panel">
+    <div class="brand-title">pdrLink.</div>
+
+    <div class="tabs">
+      <button id="tabLogin" class="ativo">Entrar</button>
+      <button id="tabRegistro">Nova Conta</button>
+    </div>
+
+    <div id="formLogin">
+      <input type="email" id="loginEmail" placeholder="Seu e-mail">
+      <input type="password" id="loginSenha" placeholder="Sua senha">
+      <button id="btnLogin">Acessar Painel</button>
+    </div>
+
+    <div id="formRegistro" style="display:none">
+      <input type="text" id="regUsername" placeholder="Seu @usuario">
+      <input type="email" id="regEmail" placeholder="E-mail de contato">
+      <input type="password" id="regSenha" placeholder="Crie uma senha forte (mín. 8)">
+      <select id="regTipo">
+        <option value="pessoa">Criador de Conteúdo / Pessoal</option>
+        <option value="loja">Marca / Negócio Local</option>
+      </select>
+      <button id="btnRegistro">Criar minha página</button>
+    </div>
+
+    <p class="erro" id="mensagemErro"></p>
+  </div>
+  <script src="/js/api.js" defer></script>
+  <script src="/js/cookie.js" defer></script>
+  <script src="/js/login.js" defer></script>
+</html>

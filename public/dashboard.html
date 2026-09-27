@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>pdrLink - Painel de Controle</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <div class="dashboard-container">
+    <div class="topo">
+      <h1>Seus Links</h1>
+      <button class="btn-sair" id="btnSair">Encerrar Sessão</button>
+    </div>
+
+    <div class="card-add glass-panel">
+      <h2>Perfil</h2>
+
+      <div class="avatar-editor">
+        <div class="avatar-preview" id="avatarPreview"></div>
+        <div>
+          <input type="file" id="avatarInput" accept="image/png, image/jpeg, image/webp, image/gif">
+          <label for="avatarInput" class="btn-upload">Trocar foto</label>
+        </div>
+      </div>
+
+      <input type="text" id="perfilNome" placeholder="Nome de exibição">
+      <textarea id="perfilBio" placeholder="Bio curta (até 300 caracteres)" rows="3"></textarea>
+
+      <div id="secaoHorario" style="display:none">
+        <div class="secao-titulo">Horário de funcionamento</div>
+        <div id="listaHorario"></div>
+      </div>
+
+      <button id="btnSalvarPerfil">Salvar perfil</button>
+      <p class="erro" id="erroPerfil"></p>
+    </div>
+
+    <div class="card-add glass-panel">
+      <h2>Adicionar Novo Destino</h2>
+      <input type="text" id="novoTitulo" placeholder="Título (ex: Meu Canal no YouTube)">
+      <input type="text" id="novaUrl" placeholder="URL de destino (https://...)">
+
+      <div class="secao-titulo">Escolher ícone (opcional)</div>
+      <div class="preset-icon-grid" id="presetIconGrid"></div>
+
+      <button id="btnCriarLink">+ Gerar Link</button>
+    </div>
+
+    <div id="listaLinks"></div>
+
+    <div class="verPagina">
+      <a id="linkPagina" href="#" target="_blank">Acessar minha página ao vivo</a>
+    </div>
+  </div>
+  <script src="/js/api.js" defer></script>
+  <script src="/js/dashboard.js" defer></script>
+</body>
+</html>
