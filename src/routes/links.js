@@ -73,6 +73,34 @@ router.post('/', linkValidation, async (req, res) => {
   }
 });
 
+router.put('/reorder', body('order').isArray(), async (req, res) => {
+  const { order } = req.body;
+
+  try {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      for (let i = 0; i < order.length; i++) {
+        await client.query(
+          'UPDATE links SET position = $1 WHERE id = $2 AND user_id = $3',
+          [i, order[i], req.userId]
+        );
+      }
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+
+    res.json({ message: 'Ordem atualizada' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao reordenar links' });
+  }
+});
+
 router.put('/:id', param('id').isInt(), linkValidation, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
@@ -119,33 +147,6 @@ router.delete('/:id', param('id').isInt(), async (req, res) => {
   }
 });
 
-router.put('/reorder', body('order').isArray(), async (req, res) => {
-  const { order } = req.body;
-
-  try {
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      for (let i = 0; i < order.length; i++) {
-        await client.query(
-          'UPDATE links SET position = $1 WHERE id = $2 AND user_id = $3',
-          [i, order[i], req.userId]
-        );
-      }
-      await client.query('COMMIT');
-    } catch (err) {
-      await client.query('ROLLBACK');
-      throw err;
-    } finally {
-      client.release();
-    }
-
-    res.json({ message: 'Ordem atualizada' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Erro ao reordenar links' });
-  }
-});
 
 router.post('/:id/icon', (req, res) => {
   upload.single('icon')(req, res, async (err) => {
