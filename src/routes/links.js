@@ -2,19 +2,20 @@ const express = require('express');
 const { body, param, validationResult } = require('express-validator');
 const pool = require('../db');
 const requireAuth = require('../middleware/auth');
+const verifyCsrf = require('../middleware/csrf');
+const upload = require('../middleware/upload');
+const uploadArquivo = require('../utils/uploadToSupabase');
 
 const router = express.Router();
 
-const ICONES_PRESET = [
-  'whatsapp', 'instagram', 'tiktok', 'facebook', 'youtube', 'email',
-  'site', 'localizacao', 'telefone', 'pix', 'twitter', 'linkedin',
-  'twitch', 'spotify', 'telegram', 'pinterest', 'kwai'
-];
-
-// Todas as rotas abaixo passam pelo requireAuth primeiro.
-// Isso garante que req.userId sempre existe e vem de um token válido —
-// nunca confiamos em um "user_id" que o cliente mande no corpo da requisição.
 router.use(requireAuth);
+router.use(verifyCsrf);
+
+const ICONES_PRESET = [
+  'whatsapp', 'instagram', 'tiktok', 'youtube', 'gmail',
+  'site', 'localizacao', 'pix', 'x', 'linkedin',
+  'twitch', 'telegram', 'github'
+];
 
 const linkValidation = [
   body('title').trim().isLength({ min: 1, max: 100 }).withMessage('Título obrigatório (máx 100 caracteres)'),
@@ -28,11 +29,14 @@ const linkValidation = [
     .withMessage('Ícone inválido')
 ];
 
-// LISTAR meus links
+router.get('/icones-disponiveis', (req, res) => {
+  res.json({ icones: ICONES_PRESET });
+});
+
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query(
-        'SELECT id, title, url, position, clicks, icon_url FROM links WHERE user_id = $1 ORDER BY position ASC, id ASC',
+      'SELECT id, title, url, position, clicks, icon_url FROM links WHERE user_id = $1 ORDER BY position ASC, id ASC',
       [req.userId]
     );
     res.json({ links: result.rows });
@@ -42,7 +46,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// CRIAR link
 router.post('/', linkValidation, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
@@ -70,7 +73,6 @@ router.post('/', linkValidation, async (req, res) => {
   }
 });
 
-// EDITAR link
 router.put('/:id', param('id').isInt(), linkValidation, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
@@ -82,7 +84,7 @@ router.put('/:id', param('id').isInt(), linkValidation, async (req, res) => {
     const result = await pool.query(
       `UPDATE links SET title = $1, url = $2
        WHERE id = $3 AND user_id = $4
-       RETURNING id, title, url, position, clicks`,
+       RETURNING id, title, url, position, clicks, icon_url`,
       [title, url, linkId, req.userId]
     );
 
@@ -97,7 +99,6 @@ router.put('/:id', param('id').isInt(), linkValidation, async (req, res) => {
   }
 });
 
-// DELETAR link
 router.delete('/:id', param('id').isInt(), async (req, res) => {
   const linkId = req.params.id;
 
@@ -118,7 +119,6 @@ router.delete('/:id', param('id').isInt(), async (req, res) => {
   }
 });
 
-// REORDENAR links (recebe um array de IDs na nova ordem desejada)
 router.put('/reorder', body('order').isArray(), async (req, res) => {
   const { order } = req.body;
 
@@ -147,10 +147,6 @@ router.put('/reorder', body('order').isArray(), async (req, res) => {
   }
 });
 
-const upload = require('../middleware/upload');
-const uploadArquivo = require('../utils/uploadToSupabase');
-
-// Upload de ícone/logo pra um link específico
 router.post('/:id/icon', (req, res) => {
   upload.single('icon')(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message });

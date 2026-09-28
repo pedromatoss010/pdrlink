@@ -8,11 +8,15 @@ const username = localStorage.getItem('username');
 document.getElementById('linkPagina').href = `/perfil.html?u=${encodeURIComponent(username || '')}`;
 
 const DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-const ICONES_PRESET = [
-  'whatsapp', 'instagram', 'tiktok', 'facebook', 'youtube', 'email',
-  'site', 'localizacao', 'telefone', 'pix', 'twitter', 'linkedin',
-  'twitch', 'spotify', 'telegram', 'pinterest', 'kwai'
-];
+
+let ICONES_PRESET = [];
+
+async function carregarIconesDisponiveis() {
+  const resp = await apiFetch('/api/links/icones-disponiveis');
+  const dados = await resp.json();
+  ICONES_PRESET = dados.icones;
+  montarPresetGrid();
+}
 
 let contaTipo = 'pessoa';
 let nomeAtual = '';
@@ -494,6 +498,6 @@ document.getElementById('avatarInput').onchange = enviarAvatar;
 document.getElementById('btnSalvarPerfil').onclick = salvarPerfil;
 document.getElementById('btnCriarLink').onclick = criarLink;
 
-montarPresetGrid();
+carregarIconesDisponiveis();
 carregarPerfil();
 carregarLinks();

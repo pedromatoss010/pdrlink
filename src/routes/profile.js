@@ -2,11 +2,13 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const pool = require('../db');
 const requireAuth = require('../middleware/auth');
+const verifyCsrf = require('../middleware/csrf');
 const upload = require('../middleware/upload');
 const uploadArquivo = require('../utils/uploadToSupabase');
 
 const router = express.Router();
 router.use(requireAuth);
+router.use(verifyCsrf);
 
 const profileValidation = [
   body('display_name').trim().isLength({ max: 100 }),
@@ -59,17 +61,6 @@ router.post('/avatar', (req, res) => {
       res.status(500).json({ error: 'Erro ao salvar avatar' });
     }
   });
-});
-
-// Apaga a conta e tudo relacionado (links, horários somem junto por causa do ON DELETE CASCADE no banco)
-router.delete('/', async (req, res) => {
-  try {
-    await pool.query('DELETE FROM users WHERE id = $1', [req.userId]);
-    res.json({ message: 'Conta removida' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Erro ao remover conta' });
-  }
 });
 
 module.exports = router;

@@ -2,20 +2,19 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const pool = require('../db');
 const requireAuth = require('../middleware/auth');
+const verifyCsrf = require('../middleware/csrf');
 
 const router = express.Router();
 router.use(requireAuth);
-
+router.use(verifyCsrf);
 
 const hoursValidation = [
   body('hours').isArray({ min: 7, max: 7 }).withMessage('Envie os 7 dias da semana (0=domingo a 6=sábado)'),
   body('hours.*.day_of_week').isInt({ min: 0, max: 6 }),
   body('hours.*.closed').isBoolean(),
-
   body('hours.*.open_time').optional({ nullable: true }).matches(/^\d{2}:\d{2}$/).withMessage('Formato de hora inválido (use HH:MM)'),
   body('hours.*.close_time').optional({ nullable: true }).matches(/^\d{2}:\d{2}$/).withMessage('Formato de hora inválido (use HH:MM)')
 ];
-
 
 router.put('/', hoursValidation, async (req, res) => {
   const errors = validationResult(req);
@@ -32,7 +31,6 @@ router.put('/', hoursValidation, async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-
     await client.query('DELETE FROM business_hours WHERE user_id = $1', [req.userId]);
 
     for (const day of hours) {
@@ -54,7 +52,6 @@ router.put('/', hoursValidation, async (req, res) => {
   }
 });
 
-// VER meu horário atual
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query(

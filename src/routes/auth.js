@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
 const { validationResult } = require('express-validator');
 const pool = require('../db');
@@ -20,14 +21,10 @@ const registerLimiter = rateLimit({
   message: { error: 'Muitas tentativas de cadastro. Tente novamente mais tarde.' }
 });
 
-// Opções do cookie do token — httpOnly impede leitura via JavaScript,
-// sameSite: 'strict' impede envio em requisições vindas de outros sites (proteção CSRF),
-// secure ativa só em produção (HTTPS), porque localhost normalmente não tem HTTPS.
-const cookieOptions = {
-  httpOnly: true,
+const cookieOptionsBase = {
   sameSite: 'strict',
   secure: process.env.NODE_ENV === 'production',
-  maxAge: 7 * 24 * 60 * 60 * 1000 // 7 dias, em milissegundos
+  maxAge: 7 * 24 * 60 * 60 * 1000
 };
 
 router.post('/register', registerLimiter, registerValidation, async (req, res) => {
@@ -74,8 +71,14 @@ router.post('/login', loginLimiter, async (req, res) => {
     }
 
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const csrfToken = crypto.randomBytes(32).toString('hex');
 
-    res.cookie('token', token, cookieOptions);
+    // Token de sessão: httpOnly, JavaScript nunca consegue ler.
+    res.cookie('token', token, { ...cookieOptionsBase, httpOnly: true });
+    // Token CSRF: propositalmente legível por JavaScript — o front-end lê esse valor
+    // e reenvia num cabeçalho customizado em cada requisição que muda dado.
+    res.cookie('csrfToken', csrfToken, { ...cookieOptionsBase, httpOnly: false });
+
     res.json({ user: { id: user.id, username: user.username, email: user.email } });
   } catch (err) {
     console.error(err);
@@ -84,7 +87,8 @@ router.post('/login', loginLimiter, async (req, res) => {
 });
 
 router.post('/logout', (req, res) => {
-  res.clearCookie('token', cookieOptions);
+  res.clearCookie('token', { ...cookieOptionsBase, httpOnly: true });
+  res.clearCookie('csrfToken', { ...cookieOptionsBase, httpOnly: false });
   res.json({ message: 'Sessão encerrada' });
 });
 
