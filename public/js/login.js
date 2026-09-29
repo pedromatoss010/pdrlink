@@ -33,8 +33,6 @@ async function fazerLogin() {
       return;
     }
 
-    // O token agora vive só no cookie httpOnly — o navegador cuida de enviá-lo sozinho.
-    // Guardamos só o username, que não é sensível, pra montar o link da página pública.
     localStorage.setItem('username', dados.user.username);
     window.location.href = '/dashboard.html';
   } catch (err) {
@@ -47,6 +45,13 @@ async function fazerLogin() {
 async function fazerRegistro() {
   const btn = document.getElementById('btnRegistro');
   const erroEl = document.getElementById('mensagemErro');
+
+  const aceitouTermos = document.getElementById('aceitaTermos').checked;
+  if (!aceitouTermos) {
+    erroEl.textContent = 'Você precisa aceitar os Termos de Uso e a Política de Privacidade para continuar.';
+    return;
+  }
+
   definirCarregando(btn, true);
 
   try {
@@ -58,7 +63,13 @@ async function fazerRegistro() {
     const resp = await apiFetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, email, password, account_type })
+      body: JSON.stringify({
+        username,
+        email,
+        password,
+        account_type,
+        accepted_terms: aceitouTermos ? 'true' : 'false'
+      })
     });
 
     const dados = await resp.json();

@@ -17,8 +17,8 @@
     </div>
 
     <div id="formLogin">
-      <input type="email" id="loginEmail" placeholder="Seu e-mail">
-      <input type="password" id="loginSenha" placeholder="Sua senha">
+      <input type="email" id="loginEmail" placeholder="Seu e-mail profissional">
+      <input type="password" id="loginSenha" placeholder="Sua senha secreta">
       <button id="btnLogin">Acessar Painel</button>
     </div>
 
@@ -30,12 +30,22 @@
         <option value="pessoa">Criador de Conteúdo / Pessoal</option>
         <option value="loja">Marca / Negócio Local</option>
       </select>
+
+      <label class="termos-check">
+        <input type="checkbox" id="aceitaTermos">
+        <span>
+          Li e aceito os <a href="/termos.html" target="_blank">Termos de Uso</a> e a
+          <a href="/privacidade.html" target="_blank">Política de Privacidade</a>.
+        </span>
+      </label>
+
       <button id="btnRegistro">Criar minha página</button>
     </div>
 
     <p class="erro" id="mensagemErro"></p>
   </div>
   <script src="/js/api.js" defer></script>
-  <script src="/js/cookie.js" defer></script>
+  <script src="js/cookie.js" defer></script>
   <script src="/js/login.js" defer></script>
+</body>
 </html>

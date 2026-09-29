@@ -380,6 +380,32 @@ button:focus-visible {
   margin-top: 0.35rem; 
 }
 
+.termos-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 1.1rem;
+  cursor: pointer;
+}
+
+.termos-check input[type="checkbox"] {
+  width: auto;
+  margin: 3px 0 0 0;
+  flex: none;
+}
+
+.termos-check span {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.termos-check a {
+  color: var(--navy);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
 
 /* =====================================================
    4. PÁGINA: PAINEL DE CONTROLE (dashboard.html)
@@ -584,7 +610,7 @@ button:focus-visible {
   flex: none;
 }
 
-/* --- CONTROLOS DE REORDENAÇÃO --- */
+/* --- CONTROLES DE REORDENAÇÃO --- */
 .link-mover {
   display: flex;
   flex-direction: column;

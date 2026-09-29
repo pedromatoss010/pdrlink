@@ -39,8 +39,8 @@ router.post('/register', registerLimiter, registerValidation, async (req, res) =
     const passwordHash = await bcrypt.hash(password, 12);
 
     const result = await pool.query(
-      `INSERT INTO users (username, email, password_hash, account_type)
-       VALUES ($1, $2, $3, $4) RETURNING id, username, email`,
+      `INSERT INTO users (username, email, password_hash, account_type, accepted_terms_at)
+       VALUES ($1, $2, $3, $4, NOW()) RETURNING id, username, email`,
       [username, email, passwordHash, account_type || 'pessoa']
     );
 
@@ -73,10 +73,7 @@ router.post('/login', loginLimiter, async (req, res) => {
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
     const csrfToken = crypto.randomBytes(32).toString('hex');
 
-    // Token de sessão: httpOnly, JavaScript nunca consegue ler.
     res.cookie('token', token, { ...cookieOptionsBase, httpOnly: true });
-    // Token CSRF: propositalmente legível por JavaScript — o front-end lê esse valor
-    // e reenvia num cabeçalho customizado em cada requisição que muda dado.
     res.cookie('csrfToken', csrfToken, { ...cookieOptionsBase, httpOnly: false });
 
     res.json({ user: { id: user.id, username: user.username, email: user.email } });
@@ -87,8 +84,10 @@ router.post('/login', loginLimiter, async (req, res) => {
 });
 
 router.post('/logout', (req, res) => {
-  res.clearCookie('token', { ...cookieOptionsBase, httpOnly: true });
-  res.clearCookie('csrfToken', { ...cookieOptionsBase, httpOnly: false });
+  const { sameSite, secure } = cookieOptionsBase;
+
+  res.clearCookie('token', { sameSite, secure, httpOnly: true });
+  res.clearCookie('csrfToken', { sameSite, secure, httpOnly: false });
   res.json({ message: 'Sessão encerrada' });
 });
 
