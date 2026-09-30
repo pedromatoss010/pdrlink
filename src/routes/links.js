@@ -40,7 +40,14 @@ const linkValidation = [
 
 const reorderValidation = [
   body('order').isArray({ max: 100 }).withMessage('Lista de reordenação inválida ou grande demais'),
-  body('order.*').custom(Number.isInteger).withMessage('Cada item da lista precisa ser um ID válido')
+  body('order.*').custom(Number.isInteger).withMessage('Cada item da lista precisa ser um ID válido'),
+
+  body('order').custom((order) => {
+    if (new Set(order).size !== order.length) {
+      throw new Error('A lista de 1 reordenação não pode ter IDs duplicados');
+    }
+    return true;
+  })
 ];
 
 router.get('/icones-disponiveis', (req, res) => {
