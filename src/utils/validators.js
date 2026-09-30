@@ -10,6 +10,10 @@ const registerValidation = [
   body('password')
     .isLength({ min: 8 })
     .withMessage('Senha deve ter no mínimo 8 caracteres'),
+  body('account_type')
+    .optional()
+    .isIn(['pessoa', 'loja'])
+    .withMessage('Tipo de conta inválido'),
   body('accepted_terms')
     .equals('true')
     .withMessage('É necessário aceitar os Termos de Uso e a Política de Privacidade')

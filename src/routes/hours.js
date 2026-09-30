@@ -8,12 +8,14 @@ const router = express.Router();
 router.use(requireAuth);
 router.use(verifyCsrf);
 
+const horaValida = /^([01]\d|2[0-3]):[0-5]\d$/;
+
 const hoursValidation = [
   body('hours').isArray({ min: 7, max: 7 }).withMessage('Envie os 7 dias da semana (0=domingo a 6=sábado)'),
   body('hours.*.day_of_week').isInt({ min: 0, max: 6 }),
   body('hours.*.closed').isBoolean(),
-  body('hours.*.open_time').optional({ nullable: true }).matches(/^\d{2}:\d{2}$/).withMessage('Formato de hora inválido (use HH:MM)'),
-  body('hours.*.close_time').optional({ nullable: true }).matches(/^\d{2}:\d{2}$/).withMessage('Formato de hora inválido (use HH:MM)')
+  body('hours.*.open_time').optional({ nullable: true }).matches(horaValida).withMessage('Horário de abertura inválido'),
+  body('hours.*.close_time').optional({ nullable: true }).matches(horaValida).withMessage('Horário de fechamento inválido')
 ];
 
 router.put('/', hoursValidation, async (req, res) => {
