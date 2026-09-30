@@ -55,6 +55,10 @@ router.post('/register', registerLimiter, registerValidation, async (req, res) =
 });
 
 router.post('/login', loginLimiter, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: "E-mail ou senha inválidos" });
+  }
   const { email, password } = req.body;
 
   try {
