@@ -1,8 +1,9 @@
 const express = require('express');
 const { body, param, validationResult } = require('express-validator');
-const pool = require('../db');
+const rateLimit = require('express-rate-limit');
 const requireAuth = require('../middleware/auth');
 const verifyCsrf = require('../middleware/csrf');
+const pool = require('../db');
 const upload = require('../middleware/upload');
 const uploadArquivo = require('../utils/uploadToSupabase');
 
@@ -11,10 +12,16 @@ const router = express.Router();
 router.use(requireAuth);
 router.use(verifyCsrf);
 
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { error: 'Muitos envios de arquivo em pouco tempo. Tente novamente mais tarde.' }
+});
+
 const ICONES_PRESET = [
   'whatsapp', 'instagram', 'tiktok', 'youtube', 'gmail',
   'site', 'localizacao', 'pix', 'x', 'linkedin',
-  'twitch', 'telegram', 'github'
+  'twitch', 'discord', 'telegram', 'github'
 ];
 
 const linkValidation = [
@@ -28,6 +35,43 @@ const linkValidation = [
     .isIn(ICONES_PRESET)
     .withMessage('Ícone inválido')
 ];
+
+
+const reorderValidation = [
+  body('order').isArray({ max: 100 }).withMessage('Lista de reordenação inválida ou grande demais'),
+  body('order.*').custom(Number.isInteger).withMessage('Cada item da lista precisa ser um ID válido')
+];
+
+router.put('/reorder', reorderValidation, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+  const { order } = req.body;
+
+  try {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      for (let i = 0; i < order.length; i++) {
+        await client.query(
+          'UPDATE links SET position = $1 WHERE id = $2 AND user_id = $3',
+          [i, order[i], req.userId]
+        );
+      }
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+
+    res.json({ message: 'Ordem atualizada' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao reordenar links' });
+  }
+});
 
 router.get('/icones-disponiveis', (req, res) => {
   res.json({ icones: ICONES_PRESET });
@@ -70,34 +114,6 @@ router.post('/', linkValidation, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erro ao criar link' });
-  }
-});
-
-router.put('/reorder', body('order').isArray(), async (req, res) => {
-  const { order } = req.body;
-
-  try {
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      for (let i = 0; i < order.length; i++) {
-        await client.query(
-          'UPDATE links SET position = $1 WHERE id = $2 AND user_id = $3',
-          [i, order[i], req.userId]
-        );
-      }
-      await client.query('COMMIT');
-    } catch (err) {
-      await client.query('ROLLBACK');
-      throw err;
-    } finally {
-      client.release();
-    }
-
-    res.json({ message: 'Ordem atualizada' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Erro ao reordenar links' });
   }
 });
 
@@ -148,7 +164,7 @@ router.delete('/:id', param('id').isInt(), async (req, res) => {
 });
 
 
-router.post('/:id/icon', (req, res) => {
+router.post('/:id/icon', uploadLimiter, (req, res) => {
   upload.single('icon')(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado' });

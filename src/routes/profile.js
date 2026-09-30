@@ -1,5 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
+const rateLimit = require('express-rate-limit');
 const pool = require('../db');
 const requireAuth = require('../middleware/auth');
 const verifyCsrf = require('../middleware/csrf');
@@ -9,6 +10,12 @@ const uploadArquivo = require('../utils/uploadToSupabase');
 const router = express.Router();
 router.use(requireAuth);
 router.use(verifyCsrf);
+
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { error: 'Muitos envios de arquivo em pouco tempo. Tente novamente mais tarde.' }
+});
 
 const profileValidation = [
   body('display_name').trim().isLength({ max: 100 }),
@@ -47,7 +54,7 @@ router.put('/', profileValidation, async (req, res) => {
   }
 });
 
-router.post('/avatar', (req, res) => {
+router.post('/avatar', uploadLimiter, (req, res) => {
   upload.single('avatar')(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado' });
