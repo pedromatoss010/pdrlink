@@ -94,3 +94,10 @@ document.getElementById('tabLogin').onclick = () => mostrarTab('login');
 document.getElementById('tabRegistro').onclick = () => mostrarTab('registro');
 document.getElementById('btnLogin').onclick = fazerLogin;
 document.getElementById('btnRegistro').onclick = fazerRegistro;
+
+// Se a URL vier com ?tab=registro (ex: link "Voltar" da página de termos),
+// já abre direto na aba de cadastro em vez de sempre cair no login.
+const parametroTab = new URLSearchParams(window.location.search).get('tab');
+if (parametroTab === 'registro') {
+  mostrarTab('registro');
+}
