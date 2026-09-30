@@ -8,14 +8,21 @@ const router = express.Router();
 router.use(requireAuth);
 router.use(verifyCsrf);
 
-const horaValida = /^([01]\d|2[0-3]):[0-5]\d$/;
+const validTimeFormat = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 const hoursValidation = [
   body('hours').isArray({ min: 7, max: 7 }).withMessage('Envie os 7 dias da semana (0=domingo a 6=sábado)'),
   body('hours.*.day_of_week').isInt({ min: 0, max: 6 }),
   body('hours.*.closed').isBoolean(),
-  body('hours.*.open_time').optional({ nullable: true }).matches(horaValida).withMessage('Horário de abertura inválido'),
-  body('hours.*.close_time').optional({ nullable: true }).matches(horaValida).withMessage('Horário de fechamento inválido')
+  body('hours.*.open_time').optional({ nullable: true }).matches(validTimeFormat).withMessage('Horário de abertura inválido'),
+  body('hours.*.close_time').optional({ nullable: true }).matches(validTimeFormat).withMessage('Horário de fechamento inválido'),
+  body('hours').custom((hours) => {
+    const days = hours.map((h) => h.day_of_week).sort((a, b) => a - b);
+    const expected = [0, 1, 2, 3, 4, 5, 6];
+    const isValid = days.length === 7 && days.every((day, i) => day === expected[i]);
+    if (!isValid) throw new Error('Os 7 dias da semana devem estar presentes, sem repetição');
+    return true;
+  })
 ];
 
 router.put('/', hoursValidation, async (req, res) => {
