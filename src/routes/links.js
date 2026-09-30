@@ -18,7 +18,7 @@ const uploadLimiter = rateLimit({
   message: { error: 'Muitos envios de arquivo em pouco tempo. Tente novamente mais tarde.' }
 });
 
-const LIMITE_LINKS_POR_USUARIO = 50;
+const LIMITE_LINKS_POR_USUARIO = 5;
 
 const ICONES_PRESET = [
   'whatsapp', 'instagram', 'tiktok', 'youtube', 'gmail',
