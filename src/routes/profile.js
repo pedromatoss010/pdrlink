@@ -6,6 +6,7 @@ const requireAuth = require('../middleware/auth');
 const verifyCsrf = require('../middleware/csrf');
 const upload = require('../middleware/upload');
 const uploadArquivo = require('../utils/uploadToSupabase');
+const verifyFileSignature = require('../utils/verifyFileSignature');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -58,7 +59,12 @@ router.post('/avatar', uploadLimiter, (req, res) => {
   upload.single('avatar')(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado' });
-
+    
+    try {
+      await verifyFileSignature(req.file.buffer);
+    } catch (sigErr) {
+      return res.status(400).json({ error: sigErr.message });
+    }
     try {
       const avatarUrl = await uploadArquivo('avatars', req.file);
       await pool.query('UPDATE users SET avatar_url = $1 WHERE id = $2', [avatarUrl, req.userId]);

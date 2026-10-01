@@ -6,6 +6,7 @@ const verifyCsrf = require('../middleware/csrf');
 const pool = require('../db');
 const upload = require('../middleware/upload');
 const uploadArquivo = require('../utils/uploadToSupabase');
+const verifyFileSignature = require('../utils/verifyFileSignature');
 
 const router = express.Router();
 
@@ -184,6 +185,11 @@ router.post('/:id/icon', uploadLimiter, (req, res) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado' });
 
+    try {
+      await verifyFileSignature(req.file.buffer);
+    } catch (sigErr) {
+      return res.status(400).json({ error: sigErr.message });
+    }
     const linkId = req.params.id;
 
     try {
