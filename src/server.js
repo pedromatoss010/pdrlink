@@ -13,6 +13,8 @@ const profileRoutes = require('./routes/profile');
 
 const app = express();
 
+app.set('trust proxy', 1);
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
