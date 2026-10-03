@@ -26,7 +26,19 @@ async function fazerLogin() {
       body: JSON.stringify({ email, password })
     });
 
-    const dados = await resp.json();
+    // 1. Lê a resposta como texto bruto primeiro, para não dar crash!
+    const textoResposta = await resp.text(); 
+    let dados;
+
+    try {
+      // 2. Tenta converter para JSON
+      dados = JSON.parse(textoResposta); 
+    } catch (err) {
+      // 3. Se não for JSON (se for HTML da Vercel), mostra o código que o servidor cuspiu!
+      erroEl.textContent = "Erro de Rede (HTML): " + textoResposta.substring(0, 60);
+      definirCarregando(btn, false);
+      return;
+    }
 
     if (!resp.ok) {
       erroEl.textContent = dados.error || 'Credenciais inválidas';
