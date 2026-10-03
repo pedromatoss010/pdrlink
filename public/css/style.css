@@ -1551,3 +1551,48 @@ button.carregando::after {
     transition-duration: 0.01ms !important;
   }
 }
+
+@media (max-width: 768px) {
+  .link-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 15px;
+    padding: 20px 15px;
+    width: 100%;
+  }
+
+  .link-icon-preview,
+  .link-icon-vazio {
+    flex-shrink: 0;
+  }
+
+  .link-info {
+    flex-grow: 1;
+    min-width: 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .link-info strong {
+    word-break: break-word;
+  }
+
+  .link-mover {
+    display: flex;
+    flex-direction: column;
+    margin-left: auto;
+  }
+
+  .link-actions {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(0,0,0,0.05);
+  }
+}
