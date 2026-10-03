@@ -54,6 +54,8 @@ async function fazerRegistro() {
 
   definirCarregando(btn, true);
 
+  const fusoNavegador = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   try {
     const username = document.getElementById('regUsername').value;
     const email = document.getElementById('regEmail').value;
@@ -68,6 +70,7 @@ async function fazerRegistro() {
         email,
         password,
         account_type,
+        timezone: fusoNavegador,
         accepted_terms: aceitouTermos ? 'true' : 'false'
       })
     });

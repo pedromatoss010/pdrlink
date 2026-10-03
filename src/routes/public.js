@@ -3,10 +3,10 @@ const pool = require('../db');
 
 const router = express.Router();
 
-function isOpenNow(hoursRow, now) {
+function isOpenNow(hoursRow, now, timezone) {
   if (!hoursRow || hoursRow.closed) return false;
 
-  const currentTime = now.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+  const currentTime = now.toLocaleTimeString('pt-BR', { timeZone: timezone });
   return currentTime >= hoursRow.open_time && currentTime <= hoursRow.close_time;
 }
 
@@ -15,7 +15,7 @@ router.get('/:username', async (req, res) => {
 
   try {
     const userResult = await pool.query(
-      'SELECT id, username, display_name, bio, account_type, avatar_url FROM users WHERE username = $1',
+      'SELECT id, username, display_name, bio, account_type, avatar_url, COALESCE(timezone, \'America/Sao_Paulo\') as timezone FROM users WHERE username = $1',
       [username]
     );
 
@@ -31,7 +31,12 @@ router.get('/:username', async (req, res) => {
     );
 
     const now = new Date();
-    const dayOfWeek = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })).getDay();
+    
+    const formatter = new Intl.DateTimeFormat('en-US', { timeZone: user.timezone, weekday: 'short' });
+    const localWeekdayStr = formatter.format(now); 
+    
+    const mapDays = { 'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6 };
+    const dayOfWeek = mapDays[localWeekdayStr];
 
     const hoursResult = await pool.query(
       'SELECT open_time, close_time, closed FROM business_hours WHERE user_id = $1 AND day_of_week = $2',
@@ -39,7 +44,7 @@ router.get('/:username', async (req, res) => {
     );
 
     const todayHours = hoursResult.rows[0] || null;
-    const open = isOpenNow(todayHours, now);
+    const open = isOpenNow(todayHours, now, user.timezone);
 
     res.json({
       username: user.username,

@@ -4,7 +4,6 @@
 
   function carregarScriptsNaoEssenciais() {
     console.log("Permissão concedida: A carregar scripts não essenciais...");
-    // Lógica futura de rastreio aqui
   }
 
   if (escolhaAnterior) {
@@ -12,15 +11,12 @@
     return;
   }
 
-  // 1. FUNÇÃO UTILITÁRIA (A "Fábrica" Profissional)
-  // Cria o elemento, aplica atributos/classes e adiciona os filhos de forma 100% segura
   const criarElemento = (tag, propriedades = {}, ...filhos) => {
     const el = Object.assign(document.createElement(tag), propriedades);
-    el.append(...filhos); // O .append converte texto solto em TextNodes automaticamente
+    el.append(...filhos); 
     return el;
   };
 
-  // 2. MONTAGEM DO BANNER (Limpa e estruturada, como se fosse HTML)
   const banner = criarElemento('div', { className: 'cookie-banner' },
     
     criarElemento('p', {},
@@ -45,7 +41,6 @@
 
   document.body.appendChild(banner);
 
-  // 3. AÇÃO DE FECHAR
   function fechar(escolha) {
     localStorage.setItem(CHAVE, escolha);
     banner.remove();

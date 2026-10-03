@@ -3,8 +3,6 @@ const pool = require('../db');
 
 const router = express.Router();
 
-// Rota pública: qualquer clique num link passa por aqui antes de ir pro destino real.
-// Isso permite contar o clique sem exigir login.
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
 

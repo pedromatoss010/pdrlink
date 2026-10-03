@@ -493,6 +493,38 @@ async function sair() {
   }
 }
 
+const copyLinkBtn = document.getElementById('btnCopyLink');
+if (copyLinkBtn) {
+  copyLinkBtn.addEventListener('click', async () => {
+    const pageUrlElement = document.getElementById('linkPagina');
+    const pageUrl = pageUrlElement.href;
+
+    if (!pageUrl || pageUrl.endsWith('#')) return;
+
+    try {
+      await navigator.clipboard.writeText(pageUrl);
+      
+      const originalText = copyLinkBtn.innerText;
+      copyLinkBtn.innerText = '✓ Link Copiado!';
+      copyLinkBtn.classList.add('copied');
+
+      setTimeout(() => {
+        copyLinkBtn.innerText = originalText;
+        copyLinkBtn.classList.remove('copied');
+      }, 2500);
+
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+      const originalText = copyLinkBtn.innerText;
+      copyLinkBtn.innerText = 'Erro ao copiar';
+      
+      setTimeout(() => {
+        copyLinkBtn.innerText = originalText;
+      }, 2500);
+    }
+  });
+}
+
 document.getElementById('btnSair').onclick = sair;
 document.getElementById('avatarInput').onchange = enviarAvatar;
 document.getElementById('btnSalvarPerfil').onclick = salvarPerfil;

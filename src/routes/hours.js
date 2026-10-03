@@ -39,18 +39,30 @@ router.put('/', hoursValidation, async (req, res) => {
 
   const client = await pool.connect();
   try {
+    const values = [];
+    hours.forEach(day => {
+      values.push(req.userId, day.day_of_week, day.open_time || null, day.close_time || null, day.closed);
+    });
+
+    const placeholders = hours.map((_, i) => {
+      const offset = i * 5;
+      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5})`;
+    }).join(', ');
+
+    const query = `
+      INSERT INTO business_hours (user_id, day_of_week, open_time, close_time, closed)
+      VALUES ${placeholders}
+      ON CONFLICT (user_id, day_of_week) 
+      DO UPDATE SET 
+        open_time = EXCLUDED.open_time,
+        close_time = EXCLUDED.close_time,
+        closed = EXCLUDED.closed
+    `;
+
     await client.query('BEGIN');
-    await client.query('DELETE FROM business_hours WHERE user_id = $1', [req.userId]);
-
-    for (const day of hours) {
-      await client.query(
-        `INSERT INTO business_hours (user_id, day_of_week, open_time, close_time, closed)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [req.userId, day.day_of_week, day.open_time || null, day.close_time || null, day.closed]
-      );
-    }
-
+    await client.query(query, values);
     await client.query('COMMIT');
+    
     res.json({ message: 'Horário atualizado' });
   } catch (err) {
     await client.query('ROLLBACK');
