@@ -5,7 +5,7 @@ function definirCarregando(botao, carregando) {
 
 const username = localStorage.getItem('username');
 
-document.getElementById('linkPagina').href = `/perfil.html?u=${encodeURIComponent(username || '')}`;
+document.getElementById('linkPagina').href = `/${encodeURIComponent(username || '')}`;
 
 const DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 

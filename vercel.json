@@ -6,6 +6,10 @@
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/src/server.js" },
-    { "src": "/(.*)", "dest": "/public/$1" }
+    { "src": "/r/(.*)", "dest": "/src/server.js" },
+    { "src": "/(css|js|icons)/(.*)", "dest": "/public/$1/$2" },
+    { "src": "/(.*\\.html)", "dest": "/public/$1" },
+    { "src": "/favicon.ico", "dest": "/public/favicon.ico" },
+    { "src": "/(.*)", "dest": "/src/server.js" }
   ]
-}   
+}

@@ -1,5 +1,14 @@
 const params = new URLSearchParams(window.location.search);
-const username = params.get('u');
+
+
+let username = new URLSearchParams(window.location.search).get('u');
+
+if (!username) {
+  const pathParts = window.location.pathname.split('/').filter(Boolean);
+  if (pathParts.length > 0) {
+    username = pathParts[0]; 
+  }
+}
 
 function mostrarErro(container, titulo, texto) {
   container.innerHTML = '';

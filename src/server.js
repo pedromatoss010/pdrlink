@@ -13,6 +13,11 @@ const profileRoutes = require('./routes/profile');
 
 const app = express();
 
+const RESERVED_USERNAMES = [
+  'login', 'dashboard', 'perfil', 'termos', 'privacidade', 
+  'api', 'r', 'css', 'js', 'icons', 'favicon.ico'
+];
+
 app.set('trust proxy', 1);
 
 app.use(helmet({
@@ -38,8 +43,20 @@ app.use('/api/public', publicRoutes);
 app.use('/r', redirectRoutes);
 app.use('/api/profile', profileRoutes);
 
-app.use((req, res) => {
-  res.status(404).json({ error: 'Rota não encontrada' });
+
+app.get('/:username', (req, res, next) => {
+  const username = req.params.username.toLowerCase();
+
+  if (!/^[a-zA-Z0-9_]{3,30}$/.test(username)) {
+    return next(); 
+  }
+
+  if (RESERVED_USERNAMES.includes(username)) {
+    return next(); 
+  }
+
+  const path = require('path');
+  res.sendFile(path.join(process.cwd(), 'public', 'perfil.html'));
 });
 
 app.use((err, req, res, next) => {
@@ -51,6 +68,9 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erro interno do servidor' });
 });
 
+app.use((req, res) => {
+  res.status(404).json({ error: 'Rota não encontrada' });
+});
 
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 3000;
@@ -58,5 +78,4 @@ if (process.env.NODE_ENV !== 'production') {
     console.log(`Servidor rodando na porta ${PORT}`);
   });
 }
-
 module.exports = app;

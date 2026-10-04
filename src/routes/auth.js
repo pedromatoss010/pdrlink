@@ -35,6 +35,10 @@ router.post('/register', registerLimiter, registerValidation, async (req, res) =
     return res.status(400).json({ errors: errors.array() });
   }
 
+  if (RESERVED_USERNAMES.includes(username.toLowerCase())) {
+    return res.status(400).json({ error: 'Este nome de usuário não está disponível.' });
+}
+
   const { username, email, password, account_type } = req.body;
 
   try {
