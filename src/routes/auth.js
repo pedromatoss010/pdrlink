@@ -11,6 +11,12 @@ const verifyCsrf = require('../middleware/csrf');
 
 const router = express.Router();
 
+// A mesma lista do server.js tem de estar importada ou definida aqui para funcionar
+const RESERVED_USERNAMES = [
+  'login', 'dashboard', 'perfil', 'termos', 'privacidade', 
+  'api', 'r', 'css', 'js', 'icons', 'favicon.ico'
+];
+
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
@@ -35,13 +41,18 @@ router.post('/register', registerLimiter, registerValidation, async (req, res) =
     return res.status(400).json({ errors: errors.array() });
   }
 
-  if (RESERVED_USERNAMES.includes(username.toLowerCase())) {
-    return res.status(400).json({ error: 'Este nome de usuário não está disponível.' });
-}
-
   const { username, email, password, account_type } = req.body;
 
   try {
+    if (!username || typeof username !== 'string') {
+      return res.status(400).json({ error: 'Formato de utilizador inválido.' });
+    }
+
+    if (RESERVED_USERNAMES.includes(username.toLowerCase())) {
+      console.warn(`[Auth Aviso] Tentativa de registo com username reservado: ${username}`);
+      return res.status(400).json({ error: 'Este nome de utilizador não está disponível.' });
+    }
+
     const passwordHash = await bcrypt.hash(password, 12);
 
     const result = await pool.query(
@@ -50,13 +61,14 @@ router.post('/register', registerLimiter, registerValidation, async (req, res) =
       [username, email, passwordHash, account_type || 'pessoa']
     );
 
-    res.status(201).json({ user: result.rows[0] });
+    return res.status(201).json({ user: result.rows[0] });
+    
   } catch (err) {
     if (err.code === '23505') {
       return res.status(409).json({ error: 'Username ou e-mail já cadastrado' });
     }
-    console.error(err);
-    res.status(500).json({ error: 'Erro ao cadastrar usuário' });
+    console.error('[Auth Erro] Falha na base de dados ao cadastrar utilizador:', err);
+    return res.status(500).json({ error: 'Erro interno ao cadastrar usuário' });
   }
 });
 
@@ -86,19 +98,23 @@ router.post('/login', loginLimiter, async (req, res) => {
     res.cookie('token', token, { ...cookieOptionsBase, httpOnly: true });
     res.cookie('csrfToken', csrfToken, { ...cookieOptionsBase, httpOnly: false });
 
-    res.json({ user: { id: user.id, username: user.username, email: user.email } });
+    return res.json({ user: { id: user.id, username: user.username, email: user.email } });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Erro ao fazer login' });
+    console.error('[Auth Erro] Falha interna no login:', err);
+    return res.status(500).json({ error: 'Erro ao fazer login' });
   }
 });
 
 router.post('/logout', requireAuth, verifyCsrf, (req, res) => {
-  const { sameSite, secure } = cookieOptionsBase;
-
-  res.clearCookie('token', { sameSite, secure, httpOnly: true });
-  res.clearCookie('csrfToken', { sameSite, secure, httpOnly: false });
-  res.json({ message: 'Sessão encerrada' });
+  try {
+    const { sameSite, secure } = cookieOptionsBase;
+    res.clearCookie('token', { sameSite, secure, httpOnly: true });
+    res.clearCookie('csrfToken', { sameSite, secure, httpOnly: false });
+    return res.json({ message: 'Sessão encerrada' });
+  } catch (err) {
+    console.error('[Auth Erro] Falha ao encerrar sessão (logout):', err);
+    return res.status(500).json({ error: 'Erro ao fazer logout' });
+  }
 });
 
 module.exports = router;

@@ -12,10 +12,14 @@ const DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sáb
 let ICONES_PRESET = [];
 
 async function carregarIconesDisponiveis() {
-  const resp = await apiFetch('/api/links/icones-disponiveis');
-  const dados = await resp.json();
-  ICONES_PRESET = dados.icones;
-  montarPresetGrid();
+  try {
+    const resp = await apiFetch('/api/links/icones-disponiveis');
+    const dados = await resp.json();
+    ICONES_PRESET = dados.icones;
+    montarPresetGrid();
+  } catch (err) {
+    console.error('[Dashboard Erro] Falha ao carregar ícones disponíveis:', err);
+  }
 }
 
 let contaTipo = 'pessoa';
@@ -80,12 +84,14 @@ async function enviarAvatar() {
     const dados = await resp.json();
 
     if (!resp.ok) {
+      console.error('[Dashboard Erro] Resposta não-ok ao enviar avatar:', dados);
       alert(dados.error || 'Erro ao enviar foto');
       return;
     }
 
     renderizarAvatar(dados.avatar_url);
   } catch (err) {
+    console.error('[Dashboard Erro] Falha na requisição de enviar avatar:', err);
     alert(err.message);
   }
 }
@@ -169,6 +175,7 @@ async function carregarPerfil() {
       montarLinhasHorario(dadosHoras.hours || []);
     }
   } catch (err) {
+    console.error('[Dashboard Erro] Falha ao carregar dados do perfil:', err);
     document.getElementById('erroPerfil').textContent = err.message;
   }
 }
@@ -191,6 +198,7 @@ async function salvarPerfil() {
 
     if (!respPerfil.ok) {
       const dados = await respPerfil.json();
+      console.error('[Dashboard Erro] Resposta não-ok ao salvar perfil:', dados);
       erroEl.textContent = dados.error || (dados.errors && dados.errors[0].msg) || 'Erro ao salvar perfil';
       return;
     }
@@ -213,6 +221,7 @@ async function salvarPerfil() {
 
       if (!respHoras.ok) {
         const dados = await respHoras.json();
+        console.error('[Dashboard Erro] Resposta não-ok ao salvar horários:', dados);
         erroEl.textContent = dados.error || 'Erro ao salvar horário';
         return;
       }
@@ -222,6 +231,7 @@ async function salvarPerfil() {
     erroEl.textContent = 'Perfil salvo!';
     setTimeout(() => { erroEl.textContent = ''; erroEl.style.color = ''; }, 2000);
   } catch (err) {
+    console.error('[Dashboard Erro] Falha na requisição de salvar perfil:', err);
     erroEl.textContent = err.message;
   } finally {
     definirCarregando(btn, false);
@@ -332,6 +342,7 @@ async function carregarLinks() {
     linksAtuais = dados.links;
     renderizarListaLinks();
   } catch (err) {
+    console.error('[Dashboard Erro] Falha ao carregar lista de links:', err);
     document.getElementById('listaLinks').textContent = err.message;
   }
 }
@@ -353,8 +364,12 @@ async function moverLink(id, direcao) {
       body: JSON.stringify({ order })
     });
 
-    if (!resp.ok) carregarLinks();
+    if (!resp.ok) {
+      console.error('[Dashboard Erro] Falha na API ao reordenar links');
+      carregarLinks();
+    }
   } catch (err) {
+    console.error('[Dashboard Erro] Erro na requisição de reordenar links:', err);
     alert(err.message);
     carregarLinks();
   }
@@ -376,12 +391,14 @@ async function enviarIconeLink(id) {
     const dados = await resp.json();
 
     if (!resp.ok) {
+      console.error('[Dashboard Erro] Resposta não-ok ao enviar ícone de link:', dados);
       alert(dados.error || 'Erro ao enviar logo');
       return;
     }
 
     carregarLinks();
   } catch (err) {
+    console.error('[Dashboard Erro] Falha na requisição de enviar ícone de link:', err);
     alert(err.message);
   }
 }
@@ -437,9 +454,11 @@ async function salvarEdicao(id) {
       carregarLinks();
     } else {
       const dados = await resp.json();
+      console.error('[Dashboard Erro] Resposta não-ok ao editar link:', dados);
       alert(dados.error || (dados.errors && dados.errors[0].msg) || 'Erro ao editar link');
     }
   } catch (err) {
+    console.error('[Dashboard Erro] Falha na requisição de editar link:', err);
     alert(err.message);
   }
 }
@@ -466,9 +485,11 @@ async function criarLink() {
       carregarLinks();
     } else {
       const dados = await resp.json();
+      console.error('[Dashboard Erro] Resposta não-ok ao criar link:', dados);
       alert(dados.error || 'Falha ao criar o link');
     }
   } catch (err) {
+    console.error('[Dashboard Erro] Falha na requisição de criar link:', err);
     alert(err.message);
   } finally {
     definirCarregando(btn, false);
@@ -477,9 +498,13 @@ async function criarLink() {
 
 async function deletarLink(id) {
   try {
-    await apiFetch(`/api/links/${id}`, { method: 'DELETE' });
+    const resp = await apiFetch(`/api/links/${id}`, { method: 'DELETE' });
+    if (!resp.ok) {
+      console.error(`[Dashboard Erro] Falha ao deletar link ID ${id}`);
+    }
     carregarLinks();
   } catch (err) {
+    console.error('[Dashboard Erro] Falha na requisição de deletar link:', err);
     alert(err.message);
   }
 }
@@ -487,6 +512,8 @@ async function deletarLink(id) {
 async function sair() {
   try {
     await apiFetch('/api/auth/logout', { method: 'POST' });
+  } catch (err) {
+    console.error('[Dashboard Erro] Falha na requisição de logout:', err);
   } finally {
     localStorage.removeItem('username');
     window.location.href = '/login.html';
@@ -514,7 +541,7 @@ if (copyLinkBtn) {
       }, 2500);
 
     } catch (err) {
-      console.error('Failed to copy link:', err);
+      console.error('[Dashboard Erro] Falha ao copiar link para a área de transferência:', err);
       const originalText = copyLinkBtn.innerText;
       copyLinkBtn.innerText = 'Erro ao copiar';
       

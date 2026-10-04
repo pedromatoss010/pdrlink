@@ -26,21 +26,20 @@ async function fazerLogin() {
       body: JSON.stringify({ email, password })
     });
 
-    // 1. Lê a resposta como texto bruto primeiro, para não dar crash!
     const textoResposta = await resp.text(); 
     let dados;
 
     try {
-      // 2. Tenta converter para JSON
       dados = JSON.parse(textoResposta); 
     } catch (err) {
-      // 3. Se não for JSON (se for HTML da Vercel), mostra o código que o servidor cuspiu!
-      erroEl.textContent = "Erro de Rede (HTML): " + textoResposta.substring(0, 60);
+      console.error('[Auth Frontend Erro] A resposta da API não é um JSON válido. Resposta recebida:', textoResposta);
+      erroEl.textContent = "Erro no servidor. Tente novamente mais tarde.";
       definirCarregando(btn, false);
       return;
     }
 
     if (!resp.ok) {
+      console.error('[Auth Frontend Erro] Login falhou:', dados);
       erroEl.textContent = dados.error || 'Credenciais inválidas';
       return;
     }
@@ -48,6 +47,7 @@ async function fazerLogin() {
     localStorage.setItem('username', dados.user.username);
     window.location.href = '/dashboard.html';
   } catch (err) {
+    console.error('[Auth Frontend Crítico] Falha na execução do login:', err);
     erroEl.textContent = err.message;
   } finally {
     definirCarregando(btn, false);
@@ -65,7 +65,6 @@ async function fazerRegistro() {
   }
 
   definirCarregando(btn, true);
-
   const fusoNavegador = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   try {
@@ -90,6 +89,7 @@ async function fazerRegistro() {
     const dados = await resp.json();
 
     if (!resp.ok) {
+      console.error('[Auth Frontend Erro] Falha no registo:', dados);
       erroEl.textContent = dados.error || (dados.errors && dados.errors[0].msg) || 'Erro ao processar registro';
       return;
     }
@@ -99,6 +99,7 @@ async function fazerRegistro() {
     mostrarTab('login');
     await fazerLogin();
   } catch (err) {
+    console.error('[Auth Frontend Crítico] Falha na execução do registo:', err);
     erroEl.textContent = err.message;
   } finally {
     definirCarregando(btn, false);
@@ -110,8 +111,6 @@ document.getElementById('tabRegistro').onclick = () => mostrarTab('registro');
 document.getElementById('btnLogin').onclick = fazerLogin;
 document.getElementById('btnRegistro').onclick = fazerRegistro;
 
-// Se a URL vier com ?tab=registro (ex: link "Voltar" da página de termos),
-// já abre direto na aba de cadastro em vez de sempre cair no login.
 const parametroTab = new URLSearchParams(window.location.search).get('tab');
 if (parametroTab === 'registro') {
   mostrarTab('registro');

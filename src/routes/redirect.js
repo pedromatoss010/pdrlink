@@ -13,13 +13,14 @@ router.get('/:id', async (req, res) => {
     );
 
     if (result.rows.length === 0) {
+      console.warn(`[Redirect Aviso] Tentativa de acesso a link inexistente. ID: ${id}`);
       return res.status(404).send('Link não encontrado');
     }
 
-    res.redirect(302, result.rows[0].url);
+    return res.redirect(302, result.rows[0].url);
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Erro ao redirecionar');
+    console.error(`[Redirect Crítico] Falha ao contabilizar clique e redirecionar ID ${id}:`, err);
+    return res.status(500).send('Erro interno ao redirecionar');
   }
 });
 

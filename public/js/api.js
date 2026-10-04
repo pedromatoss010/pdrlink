@@ -8,8 +8,6 @@ async function apiFetch(url, options = {}) {
     const metodo = (options.method || 'GET').toUpperCase();
     const headers = { ...(options.headers || {}) };
 
-    // Só métodos que mudam dado (POST, PUT, DELETE) precisam do token CSRF —
-    // GET nunca muda nada no servidor, então não é alvo desse tipo de ataque.
     if (metodo !== 'GET') {
       const csrfToken = getCookie('csrfToken');
       if (csrfToken) headers['x-csrf-token'] = csrfToken;
@@ -17,6 +15,7 @@ async function apiFetch(url, options = {}) {
 
     return await fetch(url, { ...options, headers, credentials: 'include' });
   } catch (err) {
+    console.error(`[API Fetch Erro] Falha ao conectar em ${url}:`, err);
     throw new Error('Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.');
   }
 }
