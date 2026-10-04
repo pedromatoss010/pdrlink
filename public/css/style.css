@@ -1681,26 +1681,6 @@ button.carregando::after {
   outline-offset: 3px;
 }
 
-.err-link {
-  background: none;
-  border: none;
-  box-shadow: none;
-  padding: 0;
-  width: auto;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-decoration: none;
-  cursor: pointer;
-  transition: color 0.2s var(--ease);
-}
-
-.err-link:hover {
-  color: var(--navy);
-  background: none;
-  transform: none;
-  box-shadow: none;
-}
 
 @media (min-width: 600px) {
   .err-card { padding: 56px 48px; }
