@@ -8,7 +8,6 @@
   <link rel="shortcut icon" href="icons/favicon/icon.png" type="image/x-icon">
 </head>
 <body>
-
   <div class="dashboard-container">
     <div class="topo">
       <h1>Seus Links</h1>
@@ -56,7 +55,21 @@
       <button id="btnCopyLink" class="btn-copy">Copiar Link da página</button>
     </div>
   </div>
+  <!-- AVISO DE ERRO -->
+  <div class="err-alert" id="errAlert" role="alert" hidden>
+    <div class="err-alert-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+    </div>
+    <p class="err-alert-msg" id="errAlertMsg">Algo deu errado.</p>
+    <button class="err-alert-btn" id="errAlertOk" type="button">OK</button>
+  </div>
   <script src="/js/api.js" defer></script>
   <script src="/js/dashboard.js" defer></script>
+  <script src="/js/alert.js" defer></script>
 </body>
 </html>
