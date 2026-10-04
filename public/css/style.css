@@ -1596,3 +1596,122 @@ button.carregando::after {
     border-top: 1px solid rgba(0,0,0,0.05);
   }
 }
+
+/* =====================================================
+   PÁGINAS DE ERRO (404 / 403 / 500)
+   ===================================================== */
+.err-page {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+}
+
+.err-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-md);
+  padding: 40px 28px;
+  text-align: center;
+  animation: errIn 0.6s var(--ease) both;
+}
+
+.err-code {
+  display: block;
+  font-size: clamp(64px, 18vw, 96px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  color: var(--navy);
+  margin-bottom: 20px;
+}
+
+.err-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+  margin-bottom: 8px;
+}
+
+.err-text {
+  font-size: 15px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+.err-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.err-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 14px 22px;
+  background: var(--navy);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), background 0.2s var(--ease);
+}
+
+.err-btn:hover {
+  background: var(--navy-light);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.err-btn:focus-visible,
+.err-link:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 3px;
+}
+
+.err-link {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  width: auto;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s var(--ease);
+}
+
+.err-link:hover {
+  color: var(--navy);
+  background: none;
+  transform: none;
+  box-shadow: none;
+}
+
+@media (min-width: 600px) {
+  .err-card { padding: 56px 48px; }
+  .err-btn { width: auto; }
+}
+
+@keyframes errIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .err-card { animation: none; }
+}

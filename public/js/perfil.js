@@ -10,34 +10,25 @@ if (!username) {
   }
 }
 
-function mostrarErro(container, titulo, texto) {
-  container.innerHTML = '';
-  const h1 = document.createElement('h1');
-  h1.textContent = titulo;
-  const p = document.createElement('p');
-  p.textContent = texto;
-  container.appendChild(h1);
-  container.appendChild(p);
-}
-
 async function carregarPagina() {
   const container = document.getElementById('conteudo');
 
   if (!username) {
-    mostrarErro(container, '404', 'Usuário não localizado.');
-    return;
+    window.location.href='404.html'
+    return 
   }
 
   let resp;
   try {
     resp = await apiFetch(`/api/public/${encodeURIComponent(username)}`);
   } catch (err) {
-    mostrarErro(container, 'Erro de conexão', err.message);
+    console.error('Falha ao carregar perfil dinâmico:', err)
+    window.location.href='500.html'
     return;
   }
 
   if (!resp.ok) {
-    mostrarErro(container, '404', 'Página não encontrada no servidor.');
+    window.location.href='404.html'
     return;
   }
 

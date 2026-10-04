@@ -43,7 +43,6 @@ app.use('/api/public', publicRoutes);
 app.use('/r', redirectRoutes);
 app.use('/api/profile', profileRoutes);
 
-
 app.get('/:username', (req, res, next) => {
   const username = req.params.username.toLowerCase();
 
@@ -55,8 +54,7 @@ app.get('/:username', (req, res, next) => {
     return next(); 
   }
 
-  const path = require('path');
-  res.sendFile(path.join(process.cwd(), 'public', 'perfil.html'));
+  return res.sendFile(path.join(process.cwd(), 'public', 'perfil.html'));
 });
 
 app.use((err, req, res, next) => {
@@ -64,12 +62,12 @@ app.use((err, req, res, next) => {
     return res.status(400).json({ error: 'JSON inválido no corpo da requisição' });
   }
 
-  console.error(err);
-  res.status(500).json({ error: 'Erro interno do servidor' });
+  console.error('[API Crítico] Falha inesperada no servidor:', err);
+  return res.status(500).json({ error: 'Erro interno do servidor' });
 });
 
 app.use((req, res) => {
-  res.status(404).json({ error: 'Rota não encontrada' });
+  return res.status(404).sendFile(path.join(process.cwd(), 'public', '404.html'));
 });
 
 if (process.env.NODE_ENV !== 'production') {
@@ -78,4 +76,5 @@ if (process.env.NODE_ENV !== 'production') {
     console.log(`Servidor rodando na porta ${PORT}`);
   });
 }
+
 module.exports = app;
