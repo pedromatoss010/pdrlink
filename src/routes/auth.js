@@ -3,18 +3,17 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
-const { validationResult } = require('express-validator');
+const { body, validationResult } = require('express-validator');
 const pool = require('../db');
 const { registerValidation } = require('../utils/validators');
-const requireAuth = require('../middleware/auth');
-const verifyCsrf = require('../middleware/csrf');
 
 const router = express.Router();
 
-// A mesma lista do server.js tem de estar importada ou definida aqui para funcionar
-const RESERVED_USERNAMES = [
-  'login', 'dashboard', 'perfil', 'termos', 'privacidade', 
-  'api', 'r', 'css', 'js', 'icons', 'favicon.ico'
+const RESERVED_USERNAMES = require('../utils/reservedUsernames');
+
+const loginValidation = [
+  body('email').trim().isEmail().withMessage('E-mail ou senha inválidos'),
+  body('password').notEmpty().withMessage('E-mail ou senha inválidos')
 ];
 
 const loginLimiter = rateLimit({
@@ -45,21 +44,21 @@ router.post('/register', registerLimiter, registerValidation, async (req, res) =
 
   try {
     if (!username || typeof username !== 'string') {
-      return res.status(400).json({ error: 'Formato de utilizador inválido.' });
+      return res.status(400).json({ error: 'Formato de usuário inválido.' });
     }
 
     if (RESERVED_USERNAMES.includes(username.toLowerCase())) {
       console.warn(`[Auth Aviso] Tentativa de registo com username reservado: ${username}`);
-      return res.status(400).json({ error: 'Este nome de utilizador não está disponível.' });
+      return res.status(400).json({ error: 'Este nome de usuário não está disponível.' });
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
 
-    const result = await pool.query(
-      `INSERT INTO users (username, email, password_hash, account_type, accepted_terms_at)
-       VALUES ($1, $2, $3, $4, NOW()) RETURNING id, username, email`,
-      [username, email, passwordHash, account_type || 'pessoa']
-    );
+const result = await pool.query(
+  `INSERT INTO users (username, email, password_hash, account_type, accepted_terms_at, timezone)
+   VALUES (LOWER($1), LOWER($2), $3, $4, NOW(), 'America/Sao_Paulo') RETURNING id, username, email`,
+  [username, email, passwordHash, account_type || 'pessoa']
+);
 
     return res.status(201).json({ user: result.rows[0] });
     
@@ -72,7 +71,7 @@ router.post('/register', registerLimiter, registerValidation, async (req, res) =
   }
 });
 
-router.post('/login', loginLimiter, async (req, res) => {
+router.post('/login', loginValidation, loginLimiter, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ error: "E-mail ou senha inválidos" });
@@ -80,7 +79,7 @@ router.post('/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const result = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [email]);
     const user = result.rows[0];
 
     if (!user) {
@@ -105,7 +104,7 @@ router.post('/login', loginLimiter, async (req, res) => {
   }
 });
 
-router.post('/logout', requireAuth, verifyCsrf, (req, res) => {
+router.post('/logout', (req, res) => {
   try {
     const { sameSite, secure } = cookieOptionsBase;
     res.clearCookie('token', { sameSite, secure, httpOnly: true });

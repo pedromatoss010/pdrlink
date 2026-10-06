@@ -13,10 +13,7 @@ const profileRoutes = require('./routes/profile');
 
 const app = express();
 
-const RESERVED_USERNAMES = [
-  'login', 'dashboard', 'perfil', 'termos', 'privacidade', 
-  'api', 'r', 'css', 'js', 'icons', 'favicon.ico'
-];
+const RESERVED_USERNAMES = require('./utils/reservedUsernames')
 
 app.set('trust proxy', 1);
 

@@ -5,8 +5,12 @@ const router = express.Router();
 
 function isOpenNow(hoursRow, now, timezone) {
   if (!hoursRow || hoursRow.closed) return false;
-
-  const currentTime = now.toLocaleTimeString('pt-BR', { timeZone: timezone });
+  
+  const currentTime = now.toLocaleTimeString('pt-BR', { timeZone: timezone, hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  
+  if (hoursRow.open_time > hoursRow.close_time) {
+    return currentTime >= hoursRow.open_time || currentTime <= hoursRow.close_time;
+  }
   return currentTime >= hoursRow.open_time && currentTime <= hoursRow.close_time;
 }
 
@@ -14,8 +18,8 @@ router.get('/:username', async (req, res) => {
   const { username } = req.params;
 
   try {
-    const userResult = await pool.query(
-      'SELECT id, username, display_name, bio, account_type, avatar_url, COALESCE(timezone, \'America/Sao_Paulo\') as timezone FROM users WHERE username = $1',
+      const userResult = await pool.query(
+      'SELECT id, username, display_name, bio, account_type, avatar_url, CASE WHEN timezone = \'UTC\' THEN \'America/Sao_Paulo\' ELSE timezone END as timezone FROM users WHERE LOWER(username) = LOWER($1)',
       [username]
     );
 

@@ -113,12 +113,13 @@ router.put('/reorder', reorderValidation, async (req, res) => {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      for (let i = 0; i < order.length; i++) {
-        await client.query(
-          'UPDATE links SET position = $1 WHERE id = $2 AND user_id = $3',
-          [i, order[i], req.userId]
-        );
-      }
+      const positions = order.map((_, i) => i);
+      await client.query(
+        `UPDATE links SET position = data.position 
+        FROM (SELECT unnest($1::int[]) AS id, unnest($2::int[]) AS position) AS data 
+        WHERE links.id = data.id AND links.user_id = $3`,
+        [order, positions, req.userId]
+      );
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK');
