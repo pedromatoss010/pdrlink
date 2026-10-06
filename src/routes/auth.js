@@ -54,11 +54,21 @@ router.post('/register', registerLimiter, registerValidation, async (req, res) =
 
     const passwordHash = await bcrypt.hash(password, 12);
 
-const result = await pool.query(
-  `INSERT INTO users (username, email, password_hash, account_type, accepted_terms_at, timezone)
-   VALUES (LOWER($1), LOWER($2), $3, $4, NOW(), 'America/Sao_Paulo') RETURNING id, username, email`,
-  [username, email, passwordHash, account_type || 'pessoa']
-);
+      let validTimezone = 'America/Sao_Paulo';
+      if (typeof timezone === 'string' && timezone.trim() !== '') {
+      try {
+        Intl.DateTimeFormat(undefined, { timeZone: timezone });
+        validTimezone = timezone;
+        } catch {
+        validTimezone = 'America/Sao_Paulo';
+        }
+      }
+
+      const result = await pool.query(
+      `INSERT INTO users (username, email, password_hash, account_type, accepted_terms_at, timezone)
+       VALUES (LOWER($1), LOWER($2), $3, $4, NOW(), $5) RETURNING id, username, email`,
+      [username, email, passwordHash, account_type || 'pessoa', validTimezone]
+    );
 
     return res.status(201).json({ user: result.rows[0] });
     
@@ -66,7 +76,7 @@ const result = await pool.query(
     if (err.code === '23505') {
       return res.status(409).json({ error: 'Username ou e-mail já cadastrado' });
     }
-    console.error('[Auth Erro] Falha na base de dados ao cadastrar utilizador:', err);
+    console.error('[Auth Erro] Falha no banco de dados ao cadastrar usuário:', err);
     return res.status(500).json({ error: 'Erro interno ao cadastrar usuário' });
   }
 });

@@ -7,6 +7,7 @@ async function verifyFileSignature(buffer) {
   if (!detected || !ALLOWED_SIGNATURES.includes(detected.mime)) {
     throw new Error('O conteúdo do arquivo não corresponde a uma imagem válida');
   }
+  return detected;
 }
 
 module.exports = verifyFileSignature;

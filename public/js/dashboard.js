@@ -160,6 +160,11 @@ async function carregarPerfil() {
     const dados = await resp.json();
     const perfil = dados.profile;
 
+    if (perfil.username) {
+      localStorage.setItem('username', perfil.username);
+      document.getElementById('linkPagina').href = `/${encodeURIComponent(perfil.username)}`;
+    }
+
     contaTipo = perfil.account_type;
     nomeAtual = perfil.display_name || '';
     document.getElementById('perfilNome').value = perfil.display_name || '';

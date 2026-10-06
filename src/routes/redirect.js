@@ -5,6 +5,9 @@ const router = express.Router();
 
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
+  if (!/^\d+$/.test(id)) {
+    return res.status(404).send('Link não encontrado');
+  }
 
   try {
     const result = await pool.query(

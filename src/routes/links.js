@@ -31,7 +31,7 @@ const linkValidation = [
   body('title').trim().isLength({ min: 1, max: 100 }).withMessage('Título obrigatório (máx 100 caracteres)'),
   body('url')
     .trim()
-    .isURL({ require_protocol: true })
+    .isURL({ protocols: ['http', 'https'], require_protocol: true })
     .withMessage('URL inválida (precisa começar com http:// ou https://)'),
   body('icon_preset')
     .optional({ nullable: true })
@@ -162,6 +162,9 @@ router.put('/:id', param('id').isInt(), linkValidation, async (req, res) => {
 });
 
 router.delete('/:id', param('id').isInt(), async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({error: 'ID inválido'});
+
   const linkId = req.params.id;
 
   try {
@@ -182,6 +185,9 @@ router.delete('/:id', param('id').isInt(), async (req, res) => {
 });
 
 router.post('/:id/icon', uploadLimiter, (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({error: 'ID inválido'});
+
   upload.single('icon')(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado' });
