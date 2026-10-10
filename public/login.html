@@ -42,6 +42,25 @@
 
       <button id="btnRegistro">Criar minha página</button>
     </div>
+    <!-- NOVA ABA DE VERIFICAÇÃO -->
+<!-- NOVA ABA DE VERIFICAÇÃO -->
+<div id="formVerificacao" style="display: none; text-align: center; margin-top: 20px;">
+  <h3 style="color: #333;">Verifique seu E-mail</h3>
+  <p style="color: #666; font-size: 14px;">Enviamos um código de 6 dígitos para <br><strong id="emailDestino"></strong>.</p>
+  
+  <div style="margin: 20px 0;">
+    <input type="text" id="codigoVerificacao" placeholder="000000" maxlength="6" 
+           style="font-size: 24px; text-align: center; letter-spacing: 10px; width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+  </div>
+  
+  <button type="button" id="btnVerificar" style="width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; margin-bottom: 10px;">
+    Confirmar Código
+  </button>
+  
+  <button type="button" id="btnVoltarLogin" style="width: 100%; padding: 12px; background-color: transparent; color: #007bff; border: 1px solid #007bff; border-radius: 6px; cursor: pointer; font-size: 16px;">
+    Voltar ao Login
+  </button>
+</div>
 
     <p class="erro" id="mensagemErro"></p>
   </div>

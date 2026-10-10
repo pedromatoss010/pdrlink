@@ -94,10 +94,14 @@ async function fazerRegistro() {
       return;
     }
 
+    // document.getElementById('emailDestino').textContent = email;
+    // mostrarAbaVerificacao();
+
     document.getElementById('loginEmail').value = email;
     document.getElementById('loginSenha').value = password;
     mostrarTab('login');
     await fazerLogin();
+
   } catch (err) {
     console.error('[Auth Frontend Crítico] Falha na execução do registo:', err);
     erroEl.textContent = err.message;
@@ -111,7 +115,57 @@ document.getElementById('tabRegistro').onclick = () => mostrarTab('registro');
 document.getElementById('btnLogin').onclick = fazerLogin;
 document.getElementById('btnRegistro').onclick = fazerRegistro;
 
-const parametroTab = new URLSearchParams(window.location.search).get('tab');
-if (parametroTab === 'registro') {
-  mostrarTab('registro');
+function mostrarAbaVerificacao() {
+  document.getElementById('formLogin').style.display = 'none';
+  document.getElementById('formRegistro').style.display = 'none';
+  document.getElementById('formVerificacao').style.display = 'block';
+  document.getElementById('mensagemErro').textContent = '';
+  document.querySelector('.tabs').style.display = 'none'; 
 }
+
+async function confirmarCodigo() {
+  const btn = document.getElementById('btnVerificar');
+  const erroEl = document.getElementById('mensagemErro');
+  const email = document.getElementById('emailDestino').textContent;
+  const code = document.getElementById('codigoVerificacao').value;
+
+  if (code.length < 6) {
+    erroEl.textContent = 'Digite o código de 6 dígitos.';
+    return;
+  }
+
+  definirCarregando(btn, true);
+
+  try {
+    const resp = await apiFetch('/api/auth/verify-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code })
+    });
+
+    if (!resp.ok) {
+      const dados = await resp.json();
+      erroEl.textContent = dados.error || 'Código inválido';
+      return;
+    }
+
+    document.getElementById('loginEmail').value = email;
+    document.getElementById('loginSenha').value = document.getElementById('regSenha').value;
+    
+    document.querySelector('.tabs').style.display = 'flex';
+    mostrarTab('login');
+    await fazerLogin();
+
+  } catch (err) {
+    erroEl.textContent = err.message;
+  } finally {
+    definirCarregando(btn, false);
+  }
+}
+
+document.getElementById('btnVerificar').onclick = confirmarCodigo;
+document.getElementById('btnVoltarLogin').onclick = () => {
+  document.querySelector('.tabs').style.display = 'flex';
+  mostrarTab('login');
+  document.getElementById('formVerificacao').style.display = 'none';
+};
