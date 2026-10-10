@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
 const pool = require('../db');
 const { registerValidation } = require('../utils/validators');
+const verifyCsrf = require("../middleware/csrf")
 
 const router = express.Router();
 
@@ -114,7 +115,7 @@ router.post('/login', loginValidation, loginLimiter, async (req, res) => {
   }
 });
 
-router.post('/logout', (req, res) => {
+router.post('/logout', verifyCsrf, (req, res) => {
   try {
     const { sameSite, secure } = cookieOptionsBase;
     res.clearCookie('token', { sameSite, secure, httpOnly: true });
