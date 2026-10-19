@@ -1,7 +1,15 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const pool = require('../db');
 
 const router = express.Router();
+
+const clickLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minuto
+  max: 60, // máx 60 cliques por minuto do mesmo IP
+  message: 'Muitos cliques seguidos. Tente novamente em um minuto.'
+});
+router.use(clickLimiter);
 
 router.get('/:id', async (req, res) => {
   const { id } = req.params;

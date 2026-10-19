@@ -31,8 +31,8 @@ const linkValidation = [
   body('title').trim().isLength({ min: 1, max: 100 }).withMessage('Título obrigatório (máx 100 caracteres)'),
   body('url')
     .trim()
-    .isURL({ protocols: ['http', 'https'], require_protocol: true })
-    .withMessage('URL inválida (precisa começar com http:// ou https://)'),
+    .isURL({ protocols: ['https'], require_protocol: true })
+    .withMessage('URL inválida (precisa começar com https://)'),
   body('icon_preset')
     .optional({ nullable: true })
     .isIn(ICONES_PRESET)

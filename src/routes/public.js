@@ -1,7 +1,15 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const pool = require('../db');
 
 const router = express.Router();
+
+const publicLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minuto
+  max: 120,
+  message: { error: 'Muitas requisições. Aguarde um instante.' }
+});
+router.use(publicLimiter);
 
 function isOpenNow(hoursRow, now, timezone) {
   if (!hoursRow || hoursRow.closed) return false;

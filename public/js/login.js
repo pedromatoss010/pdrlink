@@ -169,3 +169,48 @@ document.getElementById('btnVoltarLogin').onclick = () => {
   mostrarTab('login');
   document.getElementById('formVerificacao').style.display = 'none';
 };
+
+// === INTEGRAÇÃO COM GOOGLE SIGN-IN ===
+async function tratarLoginGoogle(respostaGoogle) {
+  const erroEl = document.getElementById('mensagemErro');
+  erroEl.textContent = '';
+
+  try {
+    const resp = await apiFetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential: respostaGoogle.credential })
+    });
+
+    const dados = await resp.json();
+
+    if (!resp.ok) {
+      erroEl.textContent = dados.error || 'Erro ao conectar com o Google.';
+      return;
+    }
+
+    localStorage.setItem('username', dados.user.username);
+    window.location.href = '/dashboard.html';
+  } catch (err) {
+    console.error('[Google Login Erro]:', err);
+    erroEl.textContent = err.message || 'Erro ao comunicar com o servidor.';
+  }
+}
+
+// Inicializa o botão do Google assim que a página e o SDK carregarem
+window.addEventListener('load', () => {
+  // Substitua pelo seu Client ID real
+  const CLIENT_ID = '735086093927-u19eesni8vka5qknbu82odau2599tsa4.apps.googleusercontent.com';
+
+  if (window.google) {
+    google.accounts.id.initialize({
+      client_id: CLIENT_ID,
+      callback: tratarLoginGoogle
+    });
+
+    google.accounts.id.renderButton(
+      document.getElementById('googleButtonDiv'),
+      { theme: 'outline', size: 'large', width: '350px', text: 'continue_with', locale: 'pt-BR' }
+    );
+  }
+});

@@ -406,6 +406,15 @@ button:focus-visible {
   text-decoration: underline;
 }
 
+.googleButtonDiv {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  font-family: 'Courier New', Courier, monospace;
+  width: 300px;
+}
+
 
 /* =====================================================
    4. PÁGINA: PAINEL DE CONTROLE (dashboard.html)

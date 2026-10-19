@@ -18,13 +18,17 @@ const RESERVED_USERNAMES = require('./utils/reservedUsernames')
 app.set('trust proxy', 1);
 
 app.use(helmet({
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+  referrerPolicy: { policy: "strict-origin-when-cross-origin" },
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://accounts.google.com/gsi/style"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:"],
-      scriptSrc: ["'self'"]
+      scriptSrc: ["'self'", "https://accounts.google.com/gsi/client"],
+      frameSrc: ["'self'", "https://accounts.google.com/gsi/"],
+      connectSrc: ["'self'", "https://accounts.google.com/gsi/"]
     }
   }
 }));

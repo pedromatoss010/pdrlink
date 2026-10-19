@@ -9,6 +9,8 @@ const { registerValidation } = require('../utils/validators');
 const verifyCsrf = require("../middleware/csrf");
 const { Resend } = require('resend');
 const resend = new Resend(process.env.RESEND_API_KEY);
+const { OAuth2Client } = require('google-auth-library');
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const router = express.Router();
 
@@ -176,6 +178,95 @@ router.post('/verify-email', rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }), a
   } catch (err) {
     console.error('[Auth Erro] Falha ao verificar e-mail:', err);
     return res.status(500).json({ error: 'Erro interno ao verificar código' });
+  }
+});
+
+// === LOGIN COM GOOGLE ===
+router.post('/google', loginLimiter, async (req, res) => {
+  const { credential } = req.body;
+
+  if (!credential) {
+    return res.status(400).json({ error: 'Token do Google não fornecido.' });
+  }
+
+  try {
+    // 1. Valida o token com a API oficial do Google
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+
+    const payload = ticket.getPayload();
+    const { sub: googleId, email, name, picture } = payload;
+
+    if (!email) {
+      return res.status(400).json({ error: 'O Google não retornou um e-mail válido.' });
+    }
+
+    // 2. Procura se o usuário já existe (por google_id ou por e-mail)
+    let userResult = await pool.query(
+      'SELECT * FROM users WHERE google_id = $1 OR LOWER(email) = LOWER($2)',
+      [googleId, email]
+    );
+
+    let user = userResult.rows[0];
+
+    if (user) {
+      // Se já existia por e-mail mas ainda não tinha o google_id vinculado
+      if (!user.google_id) {
+        await pool.query('UPDATE users SET google_id = $1 WHERE id = $2', [googleId, user.id]);
+        user.google_id = googleId;
+      }
+    } else {
+      // 3. Usuário novo: gera um @username único a partir do e-mail
+      let baseUsername = email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
+      if (baseUsername.length < 3) baseUsername = 'user_' + baseUsername;
+
+      let finalUsername = baseUsername;
+      let contador = 1;
+
+      // Garante que o username não seja duplicado nem palavra reservada
+      while (true) {
+        const check = await pool.query(
+          'SELECT 1 FROM users WHERE LOWER(username) = LOWER($1)',
+          [finalUsername]
+        );
+        if (check.rows.length === 0 && !RESERVED_USERNAMES.includes(finalUsername)) {
+          break;
+        }
+        finalUsername = `${baseUsername}${contador}`;
+        contador++;
+      }
+
+      // Cria a nova conta
+      const insertResult = await pool.query(
+        `INSERT INTO users (username, email, display_name, avatar_url, google_id, account_type, accepted_terms_at)
+         VALUES ($1, $2, $3, $4, $5, 'pessoa', NOW())
+         RETURNING *`,
+        [finalUsername, email, name || finalUsername, picture || null, googleId]
+      );
+      user = insertResult.rows[0];
+    }
+
+    // 4. Emite os cookies de autenticação JWT e CSRF (iguais ao login normal)
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const csrfToken = crypto.randomBytes(32).toString('hex');
+
+    res.cookie('token', token, { ...cookieOptionsBase, httpOnly: true });
+    res.cookie('csrfToken', csrfToken, { ...cookieOptionsBase, httpOnly: false });
+
+    return res.json({
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        display_name: user.display_name,
+        avatar_url: user.avatar_url
+      }
+    });
+  } catch (err) {
+    console.error('[Auth Google Erro]:', err);
+    return res.status(401).json({ error: 'Falha na autenticação com o Google.' });
   }
 });
 

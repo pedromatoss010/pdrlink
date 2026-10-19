@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>pdrLink - Autenticação</title>
   <link rel="stylesheet" href="/css/style.css">
   <link rel="shortcut icon" href="icons/favicon/icon.png" type="image/x-icon">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
+
 <body>
 
   <div class="login-wrapper glass-panel">
@@ -42,25 +45,37 @@
 
       <button id="btnRegistro">Criar minha página</button>
     </div>
+
+    <!-- Divisor "ou" -->
+    <div style="display: flex; align-items: center; margin: 20px 0;">
+      <div style="flex: 1; height: 1px; background: rgba(255, 255, 255, 0.15);"></div>
+      <span style="padding: 0 10px; color: #888; font-size: 13px;">ou</span>
+      <div style="flex: 1; height: 1px; background: rgba(255, 255, 255, 0.15);"></div>
+    </div>
+
+    <!-- Botão Oficial do Google -->
+    <div id="googleButtonDiv" style="display: flex; justify-content: center; margin-bottom: 15px;"></div>
+
     <!-- NOVA ABA DE VERIFICAÇÃO -->
-<!-- NOVA ABA DE VERIFICAÇÃO -->
-<div id="formVerificacao" style="display: none; text-align: center; margin-top: 20px;">
-  <h3 style="color: #333;">Verifique seu E-mail</h3>
-  <p style="color: #666; font-size: 14px;">Enviamos um código de 6 dígitos para <br><strong id="emailDestino"></strong>.</p>
-  
-  <div style="margin: 20px 0;">
-    <input type="text" id="codigoVerificacao" placeholder="000000" maxlength="6" 
-           style="font-size: 24px; text-align: center; letter-spacing: 10px; width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
-  </div>
-  
-  <button type="button" id="btnVerificar" style="width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; margin-bottom: 10px;">
-    Confirmar Código
-  </button>
-  
-  <button type="button" id="btnVoltarLogin" style="width: 100%; padding: 12px; background-color: transparent; color: #007bff; border: 1px solid #007bff; border-radius: 6px; cursor: pointer; font-size: 16px;">
-    Voltar ao Login
-  </button>
-</div>
+    <div id="formVerificacao" style="display: none; text-align: center; margin-top: 20px;">
+      <h3 style="color: #333;">Verifique seu E-mail</h3>
+      <p style="color: #666; font-size: 14px;">Enviamos um código de 6 dígitos para <br><strong id="emailDestino"></strong>.</p>
+
+      <div style="margin: 20px 0;">
+        <input type="text" id="codigoVerificacao" placeholder="000000" maxlength="6"
+          style="font-size: 24px; text-align: center; letter-spacing: 10px; width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+      </div>
+
+      <button type="button" id="btnVerificar"
+        style="width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; margin-bottom: 10px;">
+        Confirmar Código
+      </button>
+
+      <button type="button" id="btnVoltarLogin"
+        style="width: 100%; padding: 12px; background-color: transparent; color: #007bff; border: 1px solid #007bff; border-radius: 6px; cursor: pointer; font-size: 16px;">
+        Voltar ao Login
+      </button>
+    </div>
 
     <p class="erro" id="mensagemErro"></p>
   </div>
@@ -68,4 +83,5 @@
   <script src="js/cookie.js" defer></script>
   <script src="/js/login.js" defer></script>
 </body>
+
 </html>
