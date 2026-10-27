@@ -1759,3 +1759,129 @@ button.carregando::after {
   min-width: 60px;
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
+
+/* ==========================================
+   BOTOES E MODAL DO QR CODE
+   ========================================== */
+.botoes-compartilhar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn-qr:hover {
+  background: var(--surface);
+  border-color: var(--navy);
+  color: var(--navy);
+}
+
+.modal-qr {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.modal-qr-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 30, 61, 0.45);
+  backdrop-filter: blur(6px);
+}
+
+.modal-qr-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 380px;
+  background: #ffffff;
+  border-radius: var(--r-lg);
+  padding: 2.2rem 1.8rem;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  animation: rise 0.22s var(--ease);
+}
+
+.modal-qr-fechar {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  font-size: 1.6rem;
+  line-height: 1;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.modal-qr-fechar:hover {
+  color: var(--text-main);
+  background: var(--bg);
+  border-radius: 50%;
+  transform: none;
+}
+
+.modal-qr-card h3 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--navy);
+  margin-bottom: 0.35rem;
+}
+
+.modal-qr-sub {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 1.4rem;
+  line-height: 1.4;
+}
+
+.qr-preview-box {
+  background: #ffffff;
+  padding: 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  display: inline-block;
+  margin-bottom: 0.8rem;
+  box-shadow: var(--shadow-xs);
+}
+
+.qr-preview-box img {
+  display: block;
+  border-radius: 4px;
+}
+
+.qr-link-texto {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 1.4rem;
+  word-break: break-all;
+}
+
+.btn-baixar-qr {
+  width: 100%;
+  padding: 13px 20px;
+  background: var(--navy);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-sm);
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.18s var(--ease);
+}
+
+.btn-baixar-qr:hover {
+  background: var(--navy-light);
+  transform: translateY(-1px);
+}

@@ -28,7 +28,7 @@ app.use(helmet({
       imgSrc: ["'self'", "data:", "https:"],
       scriptSrc: ["'self'", "https://accounts.google.com/gsi/client"],
       frameSrc: ["'self'", "https://accounts.google.com/gsi/"],
-      connectSrc: ["'self'", "https://accounts.google.com/gsi/"]
+      connectSrc: ["'self'", "https://accounts.google.com/gsi/", "https://api.qrserver.com"]
     }
   }
 }));

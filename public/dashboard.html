@@ -50,10 +50,32 @@
 
     <div id="listaLinks"></div>
 
-    <div class="verPagina">
+        <div class="verPagina">
       <a id="linkPagina" href="#" target="_blank">Acessar minha página ao vivo</a>
-      <button id="btnCopyLink" class="btn-copy">Copiar Link da página</button>
+      <div class="botoes-compartilhar">
+        <button id="btnCopyLink" class="btn-copy"> Copiar Link da página</button>
+        <button id="btnAbrirQr" class="btn-copy btn-qr"> Baixar QR Code</button>
+      </div>
     </div>
+  </div>
+
+  <!-- MODAL DO QR CODE -->
+  <div id="modalQr" class="modal-qr" style="display: none;">
+    <div class="modal-qr-backdrop" id="modalQrBackdrop"></div>
+    <div class="modal-qr-card glass-panel">
+      <button class="modal-qr-fechar" id="btnFecharQr" aria-label="Fechar">&times;</button>
+      <h3>QR Code da sua Página</h3>
+      <p class="modal-qr-sub">Imprima e coloque no balcão, nas mesas ou nos seus cartões de visita!</p>
+      
+      <div class="qr-preview-box">
+        <img id="qrImagem" src="" alt="QR Code" width="220" height="220">
+      </div>
+
+      <span class="qr-link-texto" id="qrLinkTexto"></span>
+
+      <button id="btnBaixarQr" class="btn-baixar-qr">Baixar Imagem (PNG)</button>
+    </div>
+  </div>
   </div>
   <!-- AVISO DE ERRO -->
   <div class="err-alert" id="errAlert" role="alert" hidden>

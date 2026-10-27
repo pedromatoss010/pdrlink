@@ -562,6 +562,85 @@ document.getElementById('avatarInput').onchange = enviarAvatar;
 document.getElementById('btnSalvarPerfil').onclick = salvarPerfil;
 document.getElementById('btnCriarLink').onclick = criarLink;
 
+// ==========================================
+// CONTROLE DO MODAL DE QR CODE
+// ==========================================
+const modalQr = document.getElementById('modalQr');
+const btnAbrirQr = document.getElementById('btnAbrirQr');
+const btnFecharQr = document.getElementById('btnFecharQr');
+const modalQrBackdrop = document.getElementById('modalQrBackdrop');
+const btnBaixarQr = document.getElementById('btnBaixarQr');
+const qrImagem = document.getElementById('qrImagem');
+const qrLinkTexto = document.getElementById('qrLinkTexto');
+
+function obterUrlPagina() {
+  const pageUrlElement = document.getElementById('linkPagina');
+  return pageUrlElement.href;
+}
+
+if (btnAbrirQr) {
+  btnAbrirQr.addEventListener('click', () => {
+    const url = obterUrlPagina();
+    if (!url || url.endsWith('#')) return;
+
+    // Gera o QR Code em alta definição (500x500 para ficar nítido na impressão)
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&margin=15&data=${encodeURIComponent(url)}`;
+    
+    qrImagem.src = qrUrl;
+    qrLinkTexto.textContent = url.replace(/^https?:\/\//, '');
+    modalQr.style.display = 'flex';
+  });
+}
+
+function fecharModalQr() {
+  if (modalQr) modalQr.style.display = 'none';
+}
+
+if (btnFecharQr) btnFecharQr.addEventListener('click', fecharModalQr);
+if (modalQrBackdrop) modalQrBackdrop.addEventListener('click', fecharModalQr);
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && modalQr && modalQr.style.display === 'flex') {
+    fecharModalQr();
+  }
+});
+
+// Download do QR Code com 1 clique
+if (btnBaixarQr) {
+  btnBaixarQr.addEventListener('click', async () => {
+    try {
+      btnBaixarQr.innerText = 'Baixando...';
+      btnBaixarQr.disabled = true;
+
+      const resposta = await fetch(qrImagem.src);
+      const blob = await resposta.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      const linkDownload = document.createElement('a');
+      linkDownload.href = blobUrl;
+      linkDownload.download = `qrcode-${username || 'pagina'}.png`;
+      document.body.appendChild(linkDownload);
+      linkDownload.click();
+      document.body.removeChild(linkDownload);
+      URL.revokeObjectURL(blobUrl);
+
+      btnBaixarQr.innerText = '✓ Baixado com Sucesso!';
+      setTimeout(() => {
+        btnBaixarQr.innerText = '⬇️ Baixar Imagem (PNG)';
+        btnBaixarQr.disabled = false;
+      }, 2000);
+    } catch (err) {
+      console.error('[QR Code Erro] Falha ao baixar:', err);
+      btnBaixarQr.innerText = 'Erro ao baixar';
+      setTimeout(() => {
+        btnBaixarQr.innerText = '⬇️ Baixar Imagem (PNG)';
+        btnBaixarQr.disabled = false;
+      }, 2000);
+    }
+  });
+}
+
+
 carregarIconesDisponiveis();
 carregarPerfil();
 carregarLinks();
