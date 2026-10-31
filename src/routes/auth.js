@@ -162,24 +162,24 @@ router.post('/logout', verifyCsrf, (req, res) => {
   }
 });
 
-router.post('/verify-email', rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }), async (req, res) => {
-  const { email, code } = req.body;
+// router.post('/verify-email', rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }), async (req, res) => {
+//   const { email, code } = req.body;
   
-  try {
-    const result = await pool.query('SELECT verification_token FROM users WHERE LOWER(email) = LOWER($1)', [email]);
-    const user = result.rows[0];
+//   try {
+//     const result = await pool.query('SELECT verification_token FROM users WHERE LOWER(email) = LOWER($1)', [email]);
+//     const user = result.rows[0];
 
-    if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
-    if (user.verification_token !== code) return res.status(400).json({ error: 'Código inválido ou incorreto.' });
+//     if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
+//     if (user.verification_token !== code) return res.status(400).json({ error: 'Código inválido ou incorreto.' });
 
-    await pool.query('UPDATE users SET email_verified = true, verification_token = NULL WHERE LOWER(email) = LOWER($1)', [email]);
+//     await pool.query('UPDATE users SET email_verified = true, verification_token = NULL WHERE LOWER(email) = LOWER($1)', [email]);
     
-    return res.json({ message: 'E-mail verificado com sucesso!' });
-  } catch (err) {
-    console.error('[Auth Erro] Falha ao verificar e-mail:', err);
-    return res.status(500).json({ error: 'Erro interno ao verificar código' });
-  }
-});
+//     return res.json({ message: 'E-mail verificado com sucesso!' });
+//   } catch (err) {
+//     console.error('[Auth Erro] Falha ao verificar e-mail:', err);
+//     return res.status(500).json({ error: 'Erro interno ao verificar código' });
+//   }
+// });
 
 // === LOGIN COM GOOGLE ===
 router.post('/google', loginLimiter, async (req, res) => {
@@ -203,24 +203,19 @@ router.post('/google', loginLimiter, async (req, res) => {
       return res.status(400).json({ error: 'O Google não retornou um e-mail válido.' });
     }
 
-    // Segurança: só confiamos no e-mail se o próprio Google confirmou que a pessoa é dona dele.
-    // Sem isso, alguém poderia criar uma conta Google com o e-mail de outra pessoa e entrar na conta dela.
     if (email_verified !== true) {
       return res.status(403).json({ error: 'Seu e-mail do Google não está verificado.' });
     }
 
-    // 2a. Primeiro procura SOMENTE pelo google_id (identidade forte e imutável do Google)
     let userResult = await pool.query('SELECT * FROM users WHERE google_id = $1', [googleId]);
     let user = userResult.rows[0];
 
     if (!user) {
-      // 2b. Não achou pelo google_id: procura uma conta local com o mesmo e-mail
       userResult = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [email]);
       user = userResult.rows[0];
 
       if (user) {
         if (user.google_id) {
-          // O e-mail já pertence a uma conta vinculada a OUTRA conta Google: não sobrescreve
           return res.status(409).json({ error: 'Este e-mail já está vinculado a outra conta Google.' });
         }
 
@@ -228,9 +223,6 @@ router.post('/google', loginLimiter, async (req, res) => {
           // Conta local com e-mail já comprovado: dono legítimo, só vincula o Google
           await pool.query('UPDATE users SET google_id = $1 WHERE id = $2', [googleId, user.id]);
         } else {
-          // Conta local com e-mail NUNCA comprovado: quem criou pode não ser o dono do e-mail
-          // (pré-sequestro de conta). O Google acabou de provar quem é o dono real, então
-          // a senha antiga é apagada para que um eventual invasor perca o acesso.
           await pool.query(
             `UPDATE users
                 SET google_id = $1, email_verified = true, password_hash = NULL, verification_token = NULL
