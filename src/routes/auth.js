@@ -121,7 +121,7 @@ router.post('/login', loginValidation, loginLimiter, async (req, res) => {
     const result = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [email]);
     const user = result.rows[0];
 
-    if (!user) {
+    if (!user || !user.password_hash) {
       return res.status(401).json({ error: 'E-mail ou senha inválidos' });
     }
 
@@ -197,27 +197,53 @@ router.post('/google', loginLimiter, async (req, res) => {
     });
 
     const payload = ticket.getPayload();
-    const { sub: googleId, email, name, picture } = payload;
+    const { sub: googleId, email, name, picture, email_verified } = payload;
 
     if (!email) {
       return res.status(400).json({ error: 'O Google não retornou um e-mail válido.' });
     }
 
-    // 2. Procura se o usuário já existe (por google_id ou por e-mail)
-    let userResult = await pool.query(
-      'SELECT * FROM users WHERE google_id = $1 OR LOWER(email) = LOWER($2)',
-      [googleId, email]
-    );
+    // Segurança: só confiamos no e-mail se o próprio Google confirmou que a pessoa é dona dele.
+    // Sem isso, alguém poderia criar uma conta Google com o e-mail de outra pessoa e entrar na conta dela.
+    if (email_verified !== true) {
+      return res.status(403).json({ error: 'Seu e-mail do Google não está verificado.' });
+    }
 
+    // 2a. Primeiro procura SOMENTE pelo google_id (identidade forte e imutável do Google)
+    let userResult = await pool.query('SELECT * FROM users WHERE google_id = $1', [googleId]);
     let user = userResult.rows[0];
 
-    if (user) {
-      // Se já existia por e-mail mas ainda não tinha o google_id vinculado
-      if (!user.google_id) {
-        await pool.query('UPDATE users SET google_id = $1 WHERE id = $2', [googleId, user.id]);
+    if (!user) {
+      // 2b. Não achou pelo google_id: procura uma conta local com o mesmo e-mail
+      userResult = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [email]);
+      user = userResult.rows[0];
+
+      if (user) {
+        if (user.google_id) {
+          // O e-mail já pertence a uma conta vinculada a OUTRA conta Google: não sobrescreve
+          return res.status(409).json({ error: 'Este e-mail já está vinculado a outra conta Google.' });
+        }
+
+        if (user.email_verified) {
+          // Conta local com e-mail já comprovado: dono legítimo, só vincula o Google
+          await pool.query('UPDATE users SET google_id = $1 WHERE id = $2', [googleId, user.id]);
+        } else {
+          // Conta local com e-mail NUNCA comprovado: quem criou pode não ser o dono do e-mail
+          // (pré-sequestro de conta). O Google acabou de provar quem é o dono real, então
+          // a senha antiga é apagada para que um eventual invasor perca o acesso.
+          await pool.query(
+            `UPDATE users
+                SET google_id = $1, email_verified = true, password_hash = NULL, verification_token = NULL
+              WHERE id = $2`,
+            [googleId, user.id]
+          );
+          console.warn(`[Auth Aviso] Conta ${user.id} vinculada ao Google; senha local não verificada foi removida.`);
+        }
         user.google_id = googleId;
       }
-    } else {
+    }
+
+    if (!user) {
       // 3. Usuário novo: gera um @username único a partir do e-mail
       let baseUsername = email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
       if (baseUsername.length < 3) baseUsername = 'user_' + baseUsername;
@@ -240,8 +266,8 @@ router.post('/google', loginLimiter, async (req, res) => {
 
       // Cria a nova conta
       const insertResult = await pool.query(
-        `INSERT INTO users (username, email, display_name, avatar_url, google_id, account_type, accepted_terms_at)
-         VALUES ($1, $2, $3, $4, $5, 'pessoa', NOW())
+        `INSERT INTO users (username, email, display_name, avatar_url, google_id, account_type, accepted_terms_at, email_verified)
+         VALUES ($1, $2, $3, $4, $5, 'pessoa', NOW(), true)
          RETURNING *`,
         [finalUsername, email, name || finalUsername, picture || null, googleId]
       );

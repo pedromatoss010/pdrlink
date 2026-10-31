@@ -626,20 +626,19 @@ if (btnBaixarQr) {
 
       btnBaixarQr.innerText = '✓ Baixado com Sucesso!';
       setTimeout(() => {
-        btnBaixarQr.innerText = '⬇️ Baixar Imagem (PNG)';
+        btnBaixarQr.innerText = '⬇ Baixar Imagem (PNG)';
         btnBaixarQr.disabled = false;
       }, 2000);
     } catch (err) {
       console.error('[QR Code Erro] Falha ao baixar:', err);
       btnBaixarQr.innerText = 'Erro ao baixar';
       setTimeout(() => {
-        btnBaixarQr.innerText = '⬇️ Baixar Imagem (PNG)';
+        btnBaixarQr.innerText = '⬇ Baixar Imagem (PNG)';
         btnBaixarQr.disabled = false;
       }, 2000);
     }
   });
 }
-
 
 carregarIconesDisponiveis();
 carregarPerfil();
