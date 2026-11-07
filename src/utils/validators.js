@@ -7,9 +7,13 @@ const registerValidation = [
     .matches(/^[a-zA-Z0-9_]+$/)
     .withMessage('Username deve ter 3-30 caracteres, só letras/números/_'),
   body('email').trim().isEmail().withMessage('E-mail inválido'),
-  body('password')
-    .isLength({ min: 8 })
-    .withMessage('Senha deve ter no mínimo 8 caracteres'),
+body('password')
+  .isString()
+  .withMessage('Senha deve ser um texto válido')
+  .isLength({ min: 8, max: 72 })
+  .withMessage('Senha deve ter entre 8 e 72 caracteres')
+  .matches(/^(?=.*[a-zA-Z])(?=.*\d)/)
+  .withMessage('A senha deve conter pelo menos uma letra e um número'),
   body('account_type')
     .optional()
     .isIn(['pessoa', 'loja'])

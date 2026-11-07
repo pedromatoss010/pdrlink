@@ -4,6 +4,16 @@
     { "src": "src/server.js", "use": "@vercel/node" },
     { "src": "public/**/*", "use": "@vercel/static" }
   ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    }
+  ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/src/server.js" },
     { "src": "/r/(.*)", "dest": "/src/server.js" },

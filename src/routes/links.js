@@ -184,7 +184,7 @@ router.delete('/:id', param('id').isInt(), async (req, res) => {
   }
 });
 
-router.post('/:id/icon', uploadLimiter, (req, res) => {
+router.post('/:id/icon', uploadLimiter, param('id').isInt().withMessage('ID inválido'), (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({error: 'ID inválido'});
 

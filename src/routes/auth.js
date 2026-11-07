@@ -45,7 +45,7 @@ router.post('/register', registerLimiter, registerValidation, async (req, res) =
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { username, email, password, account_type } = req.body;
+  const { username, email, password, account_type, timezone } = req.body;
 
   try {
     if (!username || typeof username !== 'string') {
