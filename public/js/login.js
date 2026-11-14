@@ -176,10 +176,15 @@ async function tratarLoginGoogle(respostaGoogle) {
   erroEl.textContent = '';
 
   try {
+    const fusoNavegador = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
     const resp = await apiFetch('/api/auth/google', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ credential: respostaGoogle.credential })
+      body: JSON.stringify({ 
+        credential: respostaGoogle.credential,
+        timezone: fusoNavegador
+      })
     });
 
     const dados = await resp.json();
