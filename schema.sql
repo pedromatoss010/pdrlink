@@ -3,7 +3,11 @@ CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(255) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255),
+    google_id VARCHAR(255) UNIQUE,
+    email_verified BOOLEAN DEFAULT false,
+    verification_token VARCHAR(255),
+    token_version INTEGER NOT NULL DEFAULT 1,
     display_name VARCHAR(255),
     bio VARCHAR(300),
     account_type VARCHAR(50) DEFAULT 'pessoa',
@@ -12,6 +16,10 @@ CREATE TABLE users (
     accepted_terms_at TIMESTAMP WITH TIME ZONE,
     timezone VARCHAR(50) DEFAULT 'America/Sao_Paulo'
 );
+
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE links ENABLE ROW LEVEL SECURITY;
+ALTER TABLE business_hours ENABLE ROW LEVEL SECURITY;
 
 -- Índices para garantir unicidade e busca rápida ignorando maiúsculas/minúsculas
 CREATE UNIQUE INDEX idx_users_username_lower ON users (LOWER(username));
