@@ -39,6 +39,11 @@ router.put('/', hoursValidation, async (req, res) => {
 
   const client = await pool.connect();
   try {
+    const userCheck = await client.query('SELECT account_type FROM users WHERE id = $1', [req.userId]);
+    if (userCheck.rows[0]?.account_type !== 'loja') {
+      return res.status(403).json({ error: 'Apenas contas do tipo loja podem configurar horário de funcionamento' });
+    }
+
     const values = [];
     hours.forEach(day => {
       values.push(req.userId, day.day_of_week, day.open_time || null, day.close_time || null, day.closed);
