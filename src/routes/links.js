@@ -6,7 +6,7 @@ const verifyCsrf = require('../middleware/csrf');
 const pool = require('../db');
 const upload = require('../middleware/upload');
 const uploadArquivo = require('../utils/uploadToSupabase');
-const verifyFileSignature = require('../utils/verifyFileSignature');
+const { deleteFile } = require('../utils/uploadToSupabase');
 
 const router = express.Router();
 
@@ -17,6 +17,12 @@ const uploadLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
   message: { error: 'Muitos envios de arquivo em pouco tempo. Tente novamente mais tarde.' }
+});
+
+const mutationLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { error: 'Muitas alterações seguidas. Aguarde um minuto.' }
 });
 
 const LIMITE_LINKS_POR_USUARIO = 5;
@@ -45,7 +51,7 @@ const reorderValidation = [
 
   body('order').custom((order) => {
     if (new Set(order).size !== order.length) {
-      throw new Error('A lista de 1 reordenação não pode ter IDs duplicados');
+      throw new Error('A lista de reordenação não pode ter IDs duplicados');
     }
     return true;
   })
@@ -68,42 +74,53 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/', linkValidation, async (req, res) => {
+router.post('/', mutationLimiter, linkValidation, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
   const { title, url, icon_preset } = req.body;
   const iconUrl = icon_preset ? `/icons/${icon_preset}.svg` : null;
 
+  const client = await pool.connect();
   try {
-    const countResult = await pool.query(
+    await client.query('BEGIN');
+
+    // Trava a linha do usuário durante o insert para evitar ultrapassar 5 links em concorrência
+    await client.query('SELECT id FROM users WHERE id = $1 FOR UPDATE', [req.userId]);
+
+    const countResult = await client.query(
       'SELECT COUNT(*) FROM links WHERE user_id = $1',
       [req.userId]
     );
     if (parseInt(countResult.rows[0].count, 10) >= LIMITE_LINKS_POR_USUARIO) {
+      await client.query('ROLLBACK');
       return res.status(400).json({ error: `Limite de ${LIMITE_LINKS_POR_USUARIO} links atingido` });
     }
 
-    const posResult = await pool.query(
+    const posResult = await client.query(
       'SELECT COALESCE(MAX(position), -1) + 1 AS next_position FROM links WHERE user_id = $1',
       [req.userId]
     );
     const nextPosition = posResult.rows[0].next_position;
 
-    const result = await pool.query(
+    const result = await client.query(
       `INSERT INTO links (user_id, title, url, position, icon_url)
        VALUES ($1, $2, $3, $4, $5) RETURNING id, title, url, position, clicks, icon_url`,
       [req.userId, title, url, nextPosition, iconUrl]
     );
 
+    await client.query('COMMIT');
     res.status(201).json({ link: result.rows[0] });
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error(err);
     res.status(500).json({ error: 'Erro ao criar link' });
+  } finally {
+    client.release();
   }
 });
 
-router.put('/reorder', reorderValidation, async (req, res) => {
+router.put('/reorder', mutationLimiter, reorderValidation, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
@@ -135,7 +152,7 @@ router.put('/reorder', reorderValidation, async (req, res) => {
   }
 });
 
-router.put('/:id', param('id').isInt(), linkValidation, async (req, res) => {
+router.put('/:id', mutationLimiter, param('id').isInt(), linkValidation, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
@@ -161,20 +178,25 @@ router.put('/:id', param('id').isInt(), linkValidation, async (req, res) => {
   }
 });
 
-router.delete('/:id', param('id').isInt(), async (req, res) => {
+router.delete('/:id', mutationLimiter, param('id').isInt(), async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({error: 'ID inválido'});
+  if (!errors.isEmpty()) return res.status(400).json({ error: 'ID inválido' });
 
   const linkId = req.params.id;
 
   try {
     const result = await pool.query(
-      'DELETE FROM links WHERE id = $1 AND user_id = $2 RETURNING id',
+      'DELETE FROM links WHERE id = $1 AND user_id = $2 RETURNING id, icon_url',
       [linkId, req.userId]
     );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Link não encontrado' });
+    }
+
+    // Remove a imagem antiga do bucket se houver
+    if (result.rows[0].icon_url) {
+      await deleteFile(result.rows[0].icon_url);
     }
 
     res.json({ message: 'Link removido' });
@@ -186,29 +208,25 @@ router.delete('/:id', param('id').isInt(), async (req, res) => {
 
 router.post('/:id/icon', uploadLimiter, param('id').isInt().withMessage('ID inválido'), (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({error: 'ID inválido'});
+  if (!errors.isEmpty()) return res.status(400).json({ error: 'ID inválido' });
 
   upload.single('icon')(req, res, async (err) => {
-    if (err) return res.status(400).json({ error: err.message });
+    if (err) return res.status(400).json({ error: 'Arquivo inválido ou maior que 2MB' });
     if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado' });
 
-    try {
-      await verifyFileSignature(req.file.buffer);
-    } catch (sigErr) {
-      return res.status(400).json({ error: sigErr.message });
-    }
     const linkId = req.params.id;
 
     try {
-      const user = await pool.query(
-        'SELECT id FROM links WHERE id = $1 AND user_id = $2',
+      const existing = await pool.query(
+        'SELECT id, icon_url FROM links WHERE id = $1 AND user_id = $2',
         [linkId, req.userId]
       );
 
-      if (user.rows.length === 0) {
+      if (existing.rows.length === 0) {
         return res.status(404).json({ error: 'Link não encontrado' });
       }
 
+      const oldIconUrl = existing.rows[0].icon_url;
       const iconUrl = await uploadArquivo('links', req.file);
 
       const result = await pool.query(
@@ -216,10 +234,16 @@ router.post('/:id/icon', uploadLimiter, param('id').isInt().withMessage('ID inv�
         [iconUrl, linkId, req.userId]
       );
 
+      // Remove o ícone antigo do Supabase Storage
+      if (oldIconUrl) {
+        await deleteFile(oldIconUrl);
+      }
+
       res.json({ icon_url: result.rows[0].icon_url });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ error: 'Erro ao salvar ícone' });
+      const status = err.message && err.message.includes('imagem válida') ? 400 : 500;
+      res.status(status).json({ error: status === 400 ? err.message : 'Erro ao salvar ícone' });
     }
   });
 });
