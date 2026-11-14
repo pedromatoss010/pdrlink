@@ -4,6 +4,15 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
+// Validação das variáveis essenciais na inicialização
+const REQUIRED_ENV = ['DATABASE_URL', 'JWT_SECRET', 'SUPABASE_URL', 'SUPABASE_SERVICE_KEY'];
+for (const envVar of REQUIRED_ENV) {
+  if (!process.env[envVar]) {
+    console.error(`[ Inicialização Crítica ] Variável de ambiente obrigatória ausente no .env: ${envVar}`);
+    process.exit(1);
+  }
+}
+
 const authRoutes = require('./routes/auth');
 const linksRoutes = require('./routes/links');
 const hoursRoutes = require('./routes/hours');

@@ -1,11 +1,13 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-// O Pool gerencia várias conexões com o banco de forma eficiente,
-// em vez de abrir e fechar uma conexão nova a cada requisição.
+const sslConfig = process.env.DATABASE_CA_CERT
+  ? { rejectUnauthorized: true, ca: process.env.DATABASE_CA_CERT }
+  : { rejectUnauthorized: false };
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false } 
+  ssl: sslConfig
 });
 
 module.exports = pool;
